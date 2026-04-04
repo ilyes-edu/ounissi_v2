@@ -1,0 +1,7 @@
+<!-- templates/salary_item_update.html -->
+<h1>Update Salary Item</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Update</button>
+</form>

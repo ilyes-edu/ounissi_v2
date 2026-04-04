@@ -1,0 +1,95 @@
+<!-- templates/timesheet_list.html -->
+{% extends "base2.html" %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}Timesheet List{% endblock %}
+
+{% block content %}
+<h2>Liste Pointage</h2>
+
+<form method="get" action="">
+    <div class="form-row">
+        <div class="form-group col-md-4">
+            {{ filter_form.start_date.label_tag }}
+            {{ filter_form.start_date }}
+        </div>
+        <div class="form-group col-md-4">
+            {{ filter_form.end_date.label_tag }}
+            {{ filter_form.end_date }}
+        </div>
+        <div class="form-group col-md-4">
+            <label>Employees:</label>
+            {{ filter_form.employees }}
+        </div>
+    </div>
+    <button type="submit" >Filter</button>
+</form>
+<table class="filter_table">
+  <thead>
+    <tr>
+      <th>Nom Employee</th>
+      <th>Date</th>
+      <th>Entree 1</th>
+      <th>Sortie 1</th>
+      <th>Entree 2</th>
+      <th>Sortie 2</th>
+      <th>Entree 3</th>
+      <th>Sortie 3</th>
+      <th>Total presence</th>
+      <th>Actions</th>
+
+    </tr>
+  </thead>
+  <tbody>
+
+  {% for timesheet, hours in timesheets_with_hours %}
+    <tr>
+                <form method="post" action="{% url 'update_timesheet' timesheet.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" value="{{ timesheet.id }}">
+                    <input type="hidden" name="is_confirmed" value="{{ timesheet.is_confirmed }}">
+
+                    <td>
+                        <select name="employee">
+                            <option value="{{ timesheet.employee.id }}" selected>{{ timesheet.employee }}</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+<!--                        {{ timesheet.date }}-->
+                        <input type="date" name="date" value="{{ timesheet.date|date:'Y-m-d'}}" readonly>
+                    </td>
+                    <td>
+                        <input type="time" name="start_time" value="{{ timesheet.start_time|time:'H:i' }}">
+                    </td>
+                    <td>
+                        <input type="time" name="end_time" value="{{ timesheet.end_time|time:'H:i' }}">
+                    </td>
+                    <td>
+                        <input type="time" name="start_time_2" value="{{ timesheet.start_time_2|time:'H:i' }}">
+                    </td>
+                    <td>
+                        <input type="time" name="end_time_2" value="{{ timesheet.end_time_2|time:'H:i' }}">
+                    </td>
+                    <td>
+                        <input type="time" name="start_time_3" value="{{ timesheet.start_time_3|time:'H:i' }}">
+                    </td>
+                    <td>
+                        <input type="time" name="end_time_3" value="{{ timesheet.end_time_3|time:'H:i' }}">
+                    </td>
+                    <td>
+                        {{ hours|hours_minutes }}
+                    </td>
+                    <td>
+                        <button type="submit" class="w3-button">Valider</button>
+                    </td>
+                </form>
+
+    </tr>
+
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

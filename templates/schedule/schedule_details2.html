@@ -1,0 +1,246 @@
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+<style>
+  /* Basic styles for tabs */
+  .tab {
+    cursor: pointer;
+    padding: 10px;
+    width: 20%;
+    border: 1px solid #ccc;
+    display: inline-block;
+    background-color: #f9f9f9;
+  }
+
+  .tab:hover {
+    background-color: #ddd;
+  }
+
+  .tab.active {
+    background-color: #fff;
+    border-bottom: none;
+    font-weight: bold;
+
+  }
+
+  .table-container {
+    display: none;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+
+  .table-wrapper {
+    margin: 10px;
+  }
+</style>
+<h1>Plannification TRT</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Choisir un Model</button>
+</form>
+
+{% if selected_schedule %}
+<h2>Details du TRT</h2>
+<p>Verifier les details du TRT avant sauvegarde</p>
+<div class="tabs">
+  <div class="tab active" onclick="openTab(event, 'Details')">Details TRT</div>
+  <div class="tab" onclick="openTab(event, 'Employees')">Employees</div>
+  <div class="tab" onclick="openTab(event, 'Tasks')">Taches</div>
+  <div class="tab" onclick="openTab(event, 'Options')">Options</div>
+</div>
+
+<!-- Tab content for Details -->
+<div id="Details" class="table-container" style="display: block;">
+
+  <table class="filtertable" id="ItemsTable">
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Tache</th>
+        <th>Temps Assigne</th>
+        <th>#Operations Assignees</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for detail in schedule_details %}
+      <tr>
+<!--        <td hidden></td>-->
+        <td>{{ detail.employee }}</td>
+        <td>{{ detail.task }}</td>
+        <td>{{ detail.assigned_time }}</td>
+        {% with result=detail.assigned_time|division:detail.task.average_duration %}
+        <td>{{ result }}</td>
+        {% endwith %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <br>
+
+
+</div>
+
+<!-- Tab content for Employees -->
+<div id="Employees" class="table-container">
+  <h3>Details des Employees</h3>
+  <table class="filtertable" id="EmployeeTable">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>Employee</th>
+        <th>Temps de Travail</th>
+        <th>Temps Assigne</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for employee in schedule_employees %}
+      <tr>
+        <td>{{ employee.employee.id }}</td>
+        <td>{{ employee.employee.first_name }}</td>
+        <td>{{ employee.working_hours }}</td>
+        <td>{{ employee.total_assigned_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Tab content for Tasks -->
+<div id="Tasks" class="table-container">
+  <h2>Details des Taches</h2>
+  <table class="filtertable" id="TasksTable">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>Type</th>
+        <th>Priorite</th>
+        <th>Designation</th>
+        <th>Temps Total</th>
+        <th>Temps Assigne</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in schedule_tasks %}
+      <tr>
+        <td>{{ task.task.id }}</td>
+        <td>{{ task.task.task_type}}</td>
+        <td>{{ task.task.priority }}</td>
+        <td>{{ task.task.task_name }}</td>
+        <td>{{ task.total_time }}</td>
+        <td>{{ task.total_assigned_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Placeholder for future tables -->
+<div id="Options" class="table-container">
+  <h2>Schedule Options</h2>
+  <form id="create_schedule_form" method="post" action="{% url 'create_schedule' %}">
+    {% csrf_token %}
+    <label for="schedule_date">Schedule Date:</label>
+    <input type="date" id="schedule_date" name="schedule_date" required><br><br>
+
+    <label for="start_time">Start Time:</label>
+    <input type="time" id="start_time" name="start_time" value="{{ start_time|time:'H:i' }}" required><br><br>
+
+    <label for="end_time">End Time:</label>
+    <input type="time" id="end_time" name="end_time" value="{{ end_time|time:'H:i' }}" required><br><br>
+
+    <!-- Hidden input fields to store data from other tabs -->
+    <input type="hidden" id="tasks_data" name="tasks">
+    <input type="hidden" id="employees_data" name="employees">
+    <input type="hidden" id="scheduleItems_data" name="scheduleItems">
+
+    <button type="button" onclick="prepareFormDataAndSubmit()">Create Schedule</button>
+  </form>
+</div>
+
+{% endif %}
+
+<script>
+function openTab(evt, tabName) {
+  // Declare all variables
+  var i, tabcontent, tablinks;
+
+  // Get all elements with class="table-container" and hide them
+  tabcontent = document.getElementsByClassName("table-container");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  // Get all elements with class="tab" and remove the class "active"
+  tablinks = document.getElementsByClassName("tab");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+
+  // Show the current tab, and add an "active" class to the button that opened the tab
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+function prepareFormDataAndSubmit() {
+  // Gathering schedule_tasks data
+  let tasksData = [];
+    {% for task in schedule_tasks %}
+        tasksData.push({
+            task_id: {{ task.task.id }},
+            total_duration: timeStringToMinutes('{{ task.total_time }}'),
+            total_assigned_time: timeStringToMinutes('{{ task.total_assigned_time }}'),
+        });
+
+        {% endfor %}
+        console.log(tasksData);
+  // Gathering schedule_employees data
+    let employeesData = [];
+    {% for employee in schedule_employees %}
+        employeesData.push({
+            employee_id: {{ employee.employee.id }},
+            working_hours: timeStringToMinutes('{{ employee.working_hours }}'),
+            total_assigned_hours: timeStringToMinutes('{{ employee.total_assigned_time }}'),
+        });
+    {% endfor %}
+    console.log(employeesData);
+    //Gathering schedule_details data
+    let scheduleItemsData = [];
+    {% for detail in schedule_details %}
+        scheduleItemsData.push({
+            employee_id: {{ detail.employee.id }},
+            task_id: {{ detail.task.id }},
+            assigned_time: timeStringToMinutes('{{ detail.assigned_time }}'),
+
+        });
+        {% endfor %}
+console.log(scheduleItemsData);
+
+  var tasks = JSON.stringify(tasksData);
+  var employees = JSON.stringify(employeesData);
+  var scheduleItems = JSON.stringify(scheduleItemsData);
+
+  // Set the gathered data to the hidden input fields
+  document.getElementById("tasks_data").value = tasks;
+  document.getElementById("employees_data").value = employees;
+  document.getElementById("scheduleItems_data").value = scheduleItems;
+
+  // Submit the form
+  document.getElementById("create_schedule_form").submit();
+}
+
+	// Function to convert 'HH:MM' strings to minutes
+	function timeStringToMinutes(timeStr) {
+		const [hours, minutes] = timeStr.split(":");
+		return parseInt(hours) * 60 + parseInt(minutes);
+		}
+
+document.addEventListener("DOMContentLoaded", function() {
+    var currentDate = new Date().toISOString().split('T')[0];
+    document.getElementById("schedule_date").value = currentDate;
+});
+
+</script>
+
+{% endblock %}

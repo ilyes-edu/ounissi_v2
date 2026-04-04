@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load static %}
+    {% load tz %}
+    <title>{% block title %}My Site{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Load Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <!-- Load chosen plugin CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
+    <!-- Load DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
+
+    {% block stylesheets %}
+    <!-- Your custom stylesheets -->
+    {% endblock %}
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+<!--                <li class="nav-item active">-->
+<!--                    <a class="nav-link" href="{% url 'home' %}">Home</a>-->
+<!--                </li>-->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="employeesDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Personnel
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="employeesDropdown">
+                        <a class="dropdown-item" href="{% url 'employee_list' %}">Liste Employes</a>
+<!--                        <a class="dropdown-item" href="#">Update Employee</a>-->
+<!--                        <a class="dropdown-item" href="#">Delete Employee</a>-->
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="salaries" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Salaire
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="salaries">
+                        <a class="dropdown-item" href="{% url 'attendance_logs' %}">Import Pointage</a>
+                        <a class="dropdown-item" href="{% url 'timesheet_list' %}">Calcule Pointage</a>
+                        <a class="dropdown-item" href="{% url 'salary_list' %}">Calcule Salaires</a>
+
+
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="tasks" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        TRT & Taches
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="Taches">
+                        <a class="dropdown-item" href="{% url 'create_task' %}">Creation Tache</a>
+                        <a class="dropdown-item" href="{% url 'task_list' %}">Tableau des taches</a>
+                        <a class="dropdown-item" href="{% url 'create_schedule' %}">Creation TRT Type</a>
+                        <a class="dropdown-item" href="{% url 'schedule_details2' %}">Plannification TRT</a>
+                        <a class="dropdown-item" href="{% url 'schedule_details' %}">Suivi TRT</a>
+
+
+
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="futuredropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Menu
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="timesheetDropdown">
+                        <a class="dropdown-item" href="#">Sous Menu 1</a>
+<!--                        <a class="dropdown-item" href="#">Create Timesheet</a>-->
+<!--                        <a class="dropdown-item" href="#">Update Timesheet</a>-->
+
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="config" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Config
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="config">
+                        <div class="dropdown">
+                            <a class="dropdown-item" href="{% url 'test_queries' %}">Tests Requête</a>
+                            <a class="dropdown-item" href="{% url 'create_query' %}">Creation Requête</a>
+
+                        </div>
+
+                    </div>
+                </li>
+            </ul>
+            <div class="navbar-right">
+                {% block navbar_right %}
+                    {% if user.is_authenticated %}
+                        <p class="navbar-text">{{ user.username }}  !</p>
+						<p class="navbar-text"><a href='/admin/'>  Administration  </a></p>
+                        <p class="navbar-text"><a href="{% url 'logout' %}">  Déconnexion  </a></p>
+                    {% else %}
+                        <p class="navbar-text">You are not logged in</p>
+                        <p class="navbar-text"><a href="{% url 'login' %}"> Log In </a></p>
+                    {% endif %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    {% block content %}
+    {% endblock %}
+</div>
+<!--Calling the generic popup for all templates-->
+{% include 'modal_popup.html' %}
+<!-- Load jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Load Popper.js for Bootstrap -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+<!-- Load Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<!-- Load chosen plugin JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
+<!-- Load DataTables JS -->
+<script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+
+{% block scripts %}
+<!--shosen script-->
+    <script>
+        $(document).ready(function() {
+            $('.dropdown-toggle').dropdown();
+            $(".multi_select").chosen();
+            $(".single_select").chosen();
+        });
+        //<!--data tables script-->
+        document.addEventListener('DOMContentLoaded', function() {
+                $('.filtertable').DataTable({
+                    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                    "pageLength": -1
+                });
+            });
+
+        //<!--function for custom popup-->
+        function showModal(title = 'Message', message = 'Default message text', button1Text = 'Close', button2Text = 'Ok') {
+        $('#genericModalLabel').text(title);
+        $('#modal-message').text(message);
+        $('#button1').text(button1Text);
+        $('#button2').text(button2Text);
+        $('#button1').attr('data-dismiss', 'modal'); // Set default action to close modal
+        $('#button2').attr('data-dismiss', 'modal'); // Set default action to close modal
+
+        $('#genericModal').modal('show');
+    }
+    </script>
+<!--script coloring null values-->
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function () {
+            var cells = document.querySelectorAll('td');
+
+            cells.forEach(function (cell) {
+                if (cell.textContent.trim() === 'None') {
+                    cell.style.color = 'red';
+                }
+            });
+        });
+    </script>
+
+{% endblock %}
+</body>
+</html>

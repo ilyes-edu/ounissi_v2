@@ -1,0 +1,24 @@
+<!-- queries/query_result.html -->
+{% load static %}
+{% if error_message %}
+<p style="color: red;">{{ error_message }}</p>
+{% else %}
+<table class="filtertable no-footer w3-table w3-striped w3-white w3-border" style="width:100%;">
+    <thead>
+      <!-- Display query results -->
+      {% for column in query_results.columns %}
+        <th>{{ column }}</th>
+      {% endfor %}
+    </thead>
+    <tbody>
+      <!-- CHANGED FROM .values TO .data_rows -->
+      {% for row in query_results.data_rows %}
+      <tr>
+      {% for col in row %}
+        <td>{{ col }}</td>
+      {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{% endif %}

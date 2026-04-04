@@ -1,0 +1,82 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{ salary.employee }} - {{ salary.month|date:"F Y" }}</h5>
+</div>
+<div class="modal-body">
+    <form method="post" id="salary-detail-form" data-action="{% url 'save_salary_details' %}">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        <div class="form-group row">
+            {% for form in formset %}
+                <div class="col-md-4">
+                    {{ form.salary_item.label_tag }}
+                    {{ form.salary_item }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.value.label_tag }}
+                    {{ form.value }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.base.label_tag }}
+                    {{ form.base }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.amount.label_tag }}
+                    {{ form.amount }}
+                </div>
+            {{ form.id }}
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close-modal">Close</button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#salary-detail-form').submit(function (e) {
+            e.preventDefault();
+
+            var formData = $(this).serialize();
+            var actionUrl = $(this).data('action');  // Get the action URL from data attribute
+
+            $.ajax({
+                type: 'POST',
+                url: actionUrl,
+                data: formData,
+                success: function (data) {
+                    if (data.success) {
+                        // Handle success, e.g., close the modal
+                        alert("Saved");
+                        // $('#your-modal-id').modal('hide');
+                    } else {
+                        // Handle errors, e.g., display error messages
+                    }
+                }
+            });
+        });
+    });
+
+<!--    $('#close-modal').click(function () {-->
+<!--            // Make an Ajax request to add_update_salary-->
+<!--            $.ajax({-->
+<!--                type: 'POST',  // Change to 'POST' if necessary-->
+<!--                url: '{% url "add_update_salary" %}',  // Replace with your URL-->
+<!--                success: function (data) {-->
+<!--                    // Handle success, e.g., update the salary information-->
+<!--                    alert("Updating salary...");-->
+<!--                    // Optionally, close the modal here-->
+<!--                    // $('#your-modal-id').modal('hide');-->
+<!--                },-->
+<!--                error: function (error) {-->
+<!--                    // Handle errors, e.g., display error messages-->
+<!--                    console.error(error);-->
+<!--                }-->
+<!--            });-->
+<!--        });-->
+<!--    });-->
+</script>

@@ -1,0 +1,76 @@
+<!-- special_forms/ReceptionProduitForm.html -->
+<h2>Assignation Classer Produits</h2>
+<h3>{{ model_schedule_item.task }}</h3>
+<form id="popup_produit_form" method="post" action="{% url 'form_reception_produit' %}">
+    {% csrf_token %}
+    <div>
+        <span>Nombre de  Lignes dans la Facture/BL:</span>
+        <input id="number_of_lines" name="number_of_lines" type="hidden" value="{{ original_task.number_of_lines }}">
+        <a><strong>{{ original_task.number_of_lines }}</strong></a>
+    </div>
+    <div>
+        <label for="employee1">Employee 1:</label>
+        <select id="employee1" name="employee1" onchange="distributeLines({{ items_list }})" required>
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+
+        <span>Lignes: <input id="start1" name="employee1_range_start" size="3" ></span>
+        <span>A: <input id="end1" name="employee1_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number1">--:--:--</a></span>
+<!--        <input type="hidden" id="item1_time" name="item1_time">-->
+
+    </div>
+    <div>
+        <label for="employee2">Employee 2:</label>
+        <select id="employee2" name="employee2" onchange="distributeLines({{ items_list }})">
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+
+        <span>Lignes: <input id="start2" name="employee2_range_start" size="3"></span>
+        <span>A: <input id="end2" name="employee2_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number2">--:--:--</a></span>
+    </div>
+    <div>
+        <label for="employee3">Employee 3:</label>
+        <select id="employee3" name="employee3" onchange="distributeLines({{ items_list }})">
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+        <span>Lignes: <input id="start3" name="employee3_range_start" size="3"></span>
+        <span>A: <input id="end3" name="employee3_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number3">--:--:--</a></span>
+    </div>
+    <input type="hidden" name="supplier" value="{{ original_task.supplier }}">
+    <input type="hidden" name="ref_tiers" value="{{ original_task.ref_tiers }}">
+    <input type="hidden" name="origine" value="{{ original_task.id }}">
+    <input type="hidden" name="ref_tiers" value="{{ original_task.ref_tiers }}">
+    <input type="hidden" name="employee1_schedule_item" value="{{ model_schedule_item.id }}">
+
+    <button type="submit">Submit</button>
+</form>
+<br>
+<button data-toggle="collapse" data-target="#invoice">Detail Facture</button>
+<table id="invoice" class=" collapse table dataTable no-footer w3-table w3-striped w3-white w3-border" style="width:100%;">
+    <thead>
+      {% for column in invoice.columns %}
+        <th>{{ column }}</th>
+      {% endfor %}
+    </thead>
+    <tbody>
+      {% for row in invoice.values %}
+      <tr>
+      {% for col in row %}
+        <td>{{ col }}</td>
+      {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>

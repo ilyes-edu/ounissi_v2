@@ -1,0 +1,58 @@
+<!-- special_forms/SaisieForm.html -->
+<h2>Assignation des Saisie</h2>
+<h3>{{ model_schedule_item.task }}</h3>
+<form id="popup_saisie_form" method="post" action="{% url 'form_saisie' %}">
+    {% csrf_token %}
+    <div>
+        <label for="number_of_lines">Nombre de Lignes dans la Facture/BL:</label>
+        <input id="number_of_lines" name="number_of_lines" type="number" required>
+    </div>
+    <div>
+        <label for="employee1">Employee 1:</label>
+        <select id="employee1" name="employee1" onchange="distributeLines({{ items_list }})" required>
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+
+        <span>Lignes: <input id="start1" name="employee1_range_start" size="3" ></span>
+        <span>A: <input id="end1" name="employee1_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number1">--:--:--</a></span>
+<!--        <input type="hidden" id="item1_time" name="item1_time">-->
+    </div>
+    <div>
+        <label for="employee2">Employee 2:</label>
+        <select id="employee2" name="employee2" onchange="distributeLines({{ items_list }})">
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+
+        <span>Lignes: <input id="start2" name="employee2_range_start" size="3"></span>
+        <span>A: <input id="end2" name="employee2_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number2">--:--:--</a></span>
+
+    </div>
+        <div>
+        <label for="employee3">Employee 3:</label>
+        <select id="employee3" name="employee3" onchange="distributeLines({{ items_list }} )">
+            <option value="">Selectioner un Employee</option>
+            {% for employee in model_employees %}
+            <option value="{{ employee.employee.id }}">{{ employee.employee }}</option>
+            {% endfor %}
+        </select>
+
+        <span>Lignes: <input id="start3" name="employee3_range_start" size="3"></span>
+        <span>A: <input id="end3" name="employee3_range_end" size="3"></span>
+        <span><a>Temps requis:</a><a id="number3">--:--:--</a></span>
+    </div>
+    <input type="hidden" name="supplier" value="{{ original_task.supplier }}">
+    <input type="hidden" name="ref_tiers" value="{{ original_task.ref_tiers }}">
+    <input type="hidden" name="origine" value="{{ original_task.id }}">
+    <input type="hidden" name="ref_tiers" value="{{ original_task.ref_tiers }}">
+    <input type="hidden" name="employee1_schedule_item" value="{{ model_schedule_item.id }}">
+
+    <button type="submit">Submit</button>
+</form>

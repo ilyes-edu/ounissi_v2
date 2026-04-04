@@ -1,0 +1,30 @@
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}Emplacements{% endblock %}
+
+{% block content %}
+
+<h1>Emplacements</h1>
+
+<table class="table filtertable no-footer w3-table w3-striped w3-white w3-border" style="width:100%;">
+    <thead>
+      {% for column in emplacements.columns %}
+        <th>{{ column }}</th>
+      {% endfor %}
+    </thead>
+    <tbody>
+      {% for row in emplacements.values %}
+      <tr>
+      {% for col in row %}
+        <td>{{ col }}</td>
+      {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+      </table>
+
+<script>
+
+</script>
+{% endblock %}

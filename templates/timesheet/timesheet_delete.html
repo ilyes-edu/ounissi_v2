@@ -1,0 +1,8 @@
+<!-- templates/timesheet_delete.html -->
+<h1>Delete Timesheet</h1>
+<p>Are you sure you want to delete this timesheet?</p>
+<p>{{ timesheet.date }}: {{ timesheet.start_time }} - {{ timesheet.end_time }}</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>

@@ -1,0 +1,38 @@
+
+{% extends 'base2.html' %}
+{% block title %}Closing Schedule{% endblock %}
+
+{% block content %}
+<h3>Cloture des taches du {{ schedule.date }} entre {{ schedule.start_time }} et {{ schedule.end_time }}</h3>
+
+
+<form method="post" action="{% url 'unfinished_tasks' schedule_id=schedule.id %}">
+    {% csrf_token %}
+    <h5>Si Aucune Tache est a reporter clicker sur tout Terminer</h5>
+    <button type="submit" name="finish_all" class="btn btn-danger">Tout Terminer</button>
+    <h4>Sinon Veuillez Cocher uniquement les Taches a Reporter au TRT Suivant</h4>
+    <table class="filtertable">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Task Identifier</th>
+                <th>Remaining Time</th>
+                <th>Mark as Overdue</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in unfinished_tasks %}
+            <tr>
+                <td>{{ item.task }}</td>
+                <td>{{ item.task_identifier }}</td>
+                <td>{{ item.remaining_time }}</td>
+                <td>
+                    <input type="checkbox" name="transfer_tasks" value="{{ task.task.id }}-{{ task.task_identifier }}">
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Finalize Selected</button>
+</form>
+{% endblock %}

@@ -1,0 +1,536 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+
+
+
+<title>W3.CSS Template</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/static/css/w3.css">
+<link rel="stylesheet" href="/static/css/fonts.css%3Ffamily%3DRaleway">
+<!--<link rel="stylesheet" href="/static/css/font-awesome.min.css">-->
+<!--<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">-->
+<!--<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+</style>
+</head>
+<body class="w3-light-grey">
+
+<!-- Top container -->
+<div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
+  <button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="w3_open();"><i class="fa fa-bars"></i>  Menu</button>
+  <span class="w3-bar-item w3-right">Logo</span>
+</div>
+
+<!-- Sidebar/menu -->
+<nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+  <div class="w3-container w3-row">
+<!--    <div class="w3-col s4">-->
+<!--      <img src="/w3images/avatar2.png" class="w3-circle w3-margin-right" style="width:46px">-->
+<!--    </div>-->
+    <div class="w3-col s8 w3-bar">
+
+            <span>Welcome, <strong> HOUSSEM  !</strong></span><br>
+      <a href="/accounts/logout/" class="w3-bar-item w3-button"><i class="fa fa-power-off"></i></a>
+      <a href="#" class="w3-bar-item w3-button"><i class="fa fa-user"></i></a>
+      <a href="#" class="w3-bar-item w3-button"><i class="fa fa-cog"></i></a>
+
+
+    </div>
+  </div>
+  <hr>
+  <div>
+
+  </div>
+  <div class="w3-container">
+    <h5>Dashboard</h5>
+  </div>
+  <div class="w3-bar-block">
+    <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
+    <a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa fa-users fa-fw"></i>  Overview</a>
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw"></i>  Views</a>-->
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users fa-fw"></i>  Traffic</a>-->
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bullseye fa-fw"></i>  Geo</a>-->
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-diamond fa-fw"></i>  Orders</a>-->
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bell fa-fw"></i>  News</a>-->
+<!--    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bank fa-fw"></i>  General</a>-->
+    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i>  History</a>
+    <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-cog fa-fw"></i>  Settings</a><br><br>
+  </div>
+</nav>
+
+
+<!-- Overlay effect when opening sidebar on small screens -->
+<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+
+
+
+  <!-- Header -->
+  <header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fa fa-dashboard"></i>Dashboard</b></h5>
+  </header>
+
+  <div class="w3-row-padding w3-margin-bottom">
+    <div class="w3-quarter">
+      <div class="w3-container w3-red w3-padding-16">
+        <div class="w3-left"><i class="fa fa-comment w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>52</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Journée en Cours</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-blue w3-padding-16">
+        <div class="w3-left"><i class="fa fa-eye w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>99</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Autres</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-teal w3-padding-16">
+        <div class="w3-left"><i class="fa fa-share-alt w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>00</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Autres</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-orange w3-text-white w3-padding-16">
+        <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>00</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Autres</h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="w3-panel">
+    <div class="w3-row-padding" style="margin:0 -16px">
+      <div>
+
+        <h5 style="color:red"><i class="fa fa-warning" style="font-size:24px;color:red"></i>Taches du April 25, 2023</h5>
+
+
+        <table class="w3-table w3-striped w3-white w3-border">
+          <thead>
+            <tr class="w3-light-grey">
+              <th>Tache</th>
+              <th>Priorite</th>
+              <th>Objectif</th>
+              <th>Progression</th>
+            </tr>
+          </thead>
+          <tbody>
+
+
+            <tr>
+              <td>VENTE CHIFA</td>
+              <td>1</td>
+              <td>41</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:52%">52%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>VENTE INSTANCE 1</td>
+              <td>1</td>
+              <td>41</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:9%">9%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>VENTE INSTANCE 2</td>
+              <td>1</td>
+              <td>41</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:7%">7%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>RETOUR</td>
+              <td>1</td>
+              <td>60</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:0%">0%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>COMMANDE 1/5: RECEPTION</td>
+              <td>2</td>
+              <td>1</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:0%">0%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>ORGANISATION STOCK</td>
+              <td>2</td>
+              <td>90</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:0%">0%</div>
+                </div>
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td>SAUVEGARDE CHIFA/XPERT</td>
+              <td>1</td>
+              <td>1</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:100%">100%</div>
+                </div>
+              </td>
+            </tr>
+
+
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+  <hr>
+
+  <h5 style="color:red">This list will be hidden when the scheduel is not current</h5>
+
+  <div class="w3-container">
+    <h5>Menus Saisie </h5>
+    <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+
+
+
+      <tr>
+        <td width="90%">COMMANDE 1/5: RECEPTION</td>
+        <td>
+          <form id="form_lookup_form" method="post">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task_id" value="24">
+            <input type="hidden" name="employee_id" value="6">
+            <input type="hidden" name="selected_schedule" value="89">
+            <button id="form_lookup_button" type="button" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+
+
+
+
+
+
+
+
+
+    </table>
+
+    <h5>Taches Sur Demande</h5>
+    <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+
+
+      <tr>
+        <td width="90%">SAUVEGARDE CHIFA/XPERT</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="44">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:03:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">AJUSTEMENT PRIX ET CODES A BARRES</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="55">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:01:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">VERIFICATION ETATS FACTURES</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="36">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:00:20">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">PASSER RECLAMATION</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="34">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:01:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">TOURNEE INSTANCE/CM/CB</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="47">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:00:10">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">A/RAPPLER PATIENTS SUR CARTES CB/CM</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="51">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:01:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">REMPLIR CAISSES AVEC  LA MONAIE</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="54">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:05:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">PRODUITS A RAMENER ( VIBER )</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="49">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:05:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">CLASSEMENT FACTURES</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="32">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:00:20">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">SIGNALER LA RECLAMATION</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="33">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:01:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">REMPLIR LES SACHETS PHARMACIE</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="50">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:05:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="90%">RANGEMENT PROUDUITS EN EXCES</td>
+        <td>
+          <form method="post" action="/schedule/test/add_or_edit_schedule_item">
+            <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+            <input type="hidden" name="task" value="53">
+            <input type="hidden" name="employee" value="6">
+            <input type="hidden" name="schedule" value="89">
+            <input type="hidden" name="assigned_time" value="0:05:00">
+            <button type="submit" class="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+
+    <!-- Modal for Form -->
+  <div id="formModal" class="w3-modal">
+    <div class="w3-modal-content w3-animate-top w3-card-4">
+      <header class="w3-container w3-teal">
+        <span onclick="document.getElementById('formModal').style.display='none'"
+        class="w3-button w3-display-topright">&times;</span>
+        <h2>Task Form</h2>
+      </header>
+      <div id="formContainer" class="w3-container">
+            <h1>Form pour </h1>
+    <form id="modelForm" method="post" action="/submit_form//">
+        <input type="hidden" name="csrfmiddlewaretoken" value="0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP">
+
+        <input type="hidden" name="transfer_data" value="">
+    </form>
+
+      </div>
+      <footer class="w3-container w3-teal">
+        <button type="submit" form="modelForm">Submit</button>
+      </footer>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <footer class="w3-container w3-padding-16 w3-light-grey">
+    <h4>FOOTER</h4>
+    <p>Powered by <a href=#>CPSS</a></p>
+  </footer>
+
+  <!-- End page content -->
+</div>
+
+<script>
+// Get the Sidebar
+var mySidebar = document.getElementById("mySidebar");
+
+// Get the DIV with overlay effect
+var overlayBg = document.getElementById("myOverlay");
+
+// Toggle between showing and hiding the sidebar, and add overlay effect
+function w3_open() {
+  if (mySidebar.style.display === 'block') {
+    mySidebar.style.display = 'none';
+    overlayBg.style.display = "none";
+  } else {
+    mySidebar.style.display = 'block';
+    overlayBg.style.display = "block";
+  }
+}
+
+// Close the sidebar with the close button
+function w3_close() {
+  mySidebar.style.display = "none";
+  overlayBg.style.display = "none";
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const formButton = document.getElementById('form_lookup_button');
+  formButton.addEventListener('click', submitForm);
+});
+
+// Submit the form asynchronously
+function submitForm(event) {
+  event.preventDefault(); // Prevent default form submission
+
+  // Serialize form data
+  const formData = new FormData(document.getElementById('form_lookup_form'));
+
+  fetch('/get_model_form', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': '0d0eHiHTjZ3jjytl4O05KXno53U7NtBbUSfa27Neehlw9LFrM4MfWiay4fOE8agP'
+    }
+  })
+  .then(response => response.text())
+  .then(data => {
+    // Add the form to the modal
+    document.getElementById('formContainer').innerHTML = data;
+    // Show the modal
+    document.getElementById('formModal').style.display = 'block';
+  })
+  .catch(error => console.error('Error:', error));
+}
+
+</script>
+
+</body>
+</html>

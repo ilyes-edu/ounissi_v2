@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load static %}
+    {% load custom_filters %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'css/w3.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
+
+    <style>
+    html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+    .loading-container {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 5px solid #f3f3f3;
+      border-top-color: #3498db; /* Animation color */
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none;
+    }
+    </style>
+    {% block style %}
+    {% endblock %}
+    {% block head %}
+    {% endblock %}
+    
+</head>
+
+<body class="w3-light-grey" onbeforeunload="showLoadingContainer()">
+<!-- Top container -->
+<div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
+  <button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="w3_open();"><i class="fa fa-bars"></i>  Menu</button>
+  {% if user.is_authenticated %}
+{#    <a href="{% url 'logout' %}" class="w3-bar-item w3-button"><i class="fa fa-power-off"></i></a>#}
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="w3-bar-item w3-button" style="border:none; background:none; cursor:pointer;">
+              <i class="fa fa-power-off"></i>
+          </button>
+      </form>
+    {% if logged_data.group.name == "Admin" %}
+    <a href='/admin/' class="w3-bar-item w3-button"><i class="fa fa-cog"></i></a>
+
+    {% endif %}
+  <span class="w3-bar-item w3-right"><strong>{{ logged_data.employee }}  !</strong>   Connecté</span>
+    {{ logged_data.entrance }}
+  {% else %}
+  <span class="w3-bar-item w3-right">Veuillez vous connecter! <a href="{% url 'login' %}" class="w3-button"><i class="fa fa-sign-in"></i></a>
+  </span>
+  {% endif %}
+</div>
+<!-- Sidebar/menu -->
+{% if user.is_authenticated %}
+<nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+<!-- Side Menu    -->
+  <div class="w3-container">
+    <h5>Menu Personel</h5>
+  </div>
+  <div class="w3-bar-block">
+      <!-- User Menu    -->
+      <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
+      <a href="{% url 'home' %}" class="w3-bar-item w3-button w3-padding" id="home_link"><i class="fa fa-users fa-fw"></i>  TRT Actif</a>
+      <a href="{% url 'user_schedule_history' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i>  History</a>
+      <!-- Team leader Menu    -->
+      {% if logged_data.leader or logged_data.group.name == "Admin" %}
+      <h5>Menu Gestion</h5>
+      <a href="{% url 'actual_schedule_details' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sliders fa-fw"></i>  Suivi TRT Actif</a>
+      <a href="{% url 'schedule_details' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i>  Gestion des TRTs</a>
+      <a href="{% url 'employee_list' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-users fa-fw"></i>  Liste des Employees</a>
+      <a href="{% url 'schedule_details2' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-tasks fa-fw"></i>  Plannification TRT</a>
+
+      {% endif %}
+      <!-- Manager Menu    -->
+      {% if logged_data.group.name == "Admin" %}
+        <h5>Menu Configuration</h5>
+          <a href="{% url 'attendance_logs' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-calendar fa-fw"></i>  Pointage</a>
+          <a href="{% url 'timesheet_list' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-calculator fa-fw"></i>  Calcule Pointage</a>
+          <a href="{% url 'salary_list' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-euro fa-fw"></i>  Calcule Salaires</a>
+          <a href="{% url 'create_schedule' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bar-chart fa-fw"></i>  Creation TRT Type</a>
+          <a href="{% url 'test_queries' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sliders fa-fw"></i>  Tests Requête</a>
+          <a href="{% url 'create_query' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sliders fa-fw"></i>  Creation Requête</a>
+          <a href="{% url 'create_task' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sliders fa-fw"></i>  Creation Tache</a>
+          <a href='/admin/' class="w3-bar-item w3-button w3-padding"><i class="fa fa-sliders fa-fw"></i>  Administration</a>
+        <h5>Menu Stock</h5>
+            <a href="{% url 'etat_stocks' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-calendar fa-fw"></i>  Stock</a>
+            <a href="{% url 'emplacements' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-calendar fa-fw"></i>  Emplacement</a>
+            <a href="{% url 'assign_stock' %}" class="w3-bar-item w3-button w3-padding"><i class="fa fa-calendar fa-fw"></i>  Assignations Stock</a>
+
+<br><br>
+      {% endif %}
+  </div>
+</nav>
+<!-- Overlay effect when opening sidebar on small screens -->
+<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+<div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+      <!-- Header -->
+  <header class="w3-container" style="padding-top:22px">
+    <h5 data-toggle="collapse" data-target="#dashboard"><b><i class="fa fa-dashboard" ></i>Dashboard</b></h5>
+  </header>
+
+  <div class="w3-row-padding w3-margin-bottom collapse" id="dashboard">
+    <div class="w3-quarter">
+      <div class="w3-container w3-red w3-padding-16">
+        <div class="w3-left"><i class="fa fa-comment w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>52</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Future details</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-blue w3-padding-16">
+        <div class="w3-left"><i class="fa fa-eye w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>99</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Future details</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-teal w3-padding-16">
+        <div class="w3-left"><i class="fa fa-share-alt w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>00</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Future details</h4>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-orange w3-text-white w3-padding-16">
+        <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i></div>
+        <div class="w3-right">
+          <h3>00</h3>
+        </div>
+        <div class="w3-clear"></div>
+        <h4>Future details</h4>
+      </div>
+    </div>
+  </div>
+{% endif %}
+<div id="loading-animation" class="loading-container hidden">
+    <div class="loading-spinner" style="max-width: 99%;"></div>
+</div>
+
+    <div class="w3-container" style="overflow: auto;">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+  <!-- Footer -->
+  <footer class="w3-container w3-padding-16 w3-light-grey">
+    <h4>FOOTER</h4>
+    <p>Powered by <a href=#>CPSS</a></p>
+  </footer>
+  <!-- End page content -->
+</div>
+
+<!-- Load jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Load Popper.js for Bootstrap -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+<!-- Load Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<!-- Load DataTables JS -->
+<script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<!-- Load chosen plugin JS -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
+
+
+
+<script>
+
+// initiating chosen plugin
+$(document).ready(function() {
+  $(".chosen_multi_select").chosen();
+  $(".single_select").chosen();
+
+});
+
+  document.addEventListener('DOMContentLoaded', function() {
+    $('.filtertable').DataTable({
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "pageLength": -1
+    });
+
+  });
+
+// Get the Sidebar
+var mySidebar = document.getElementById("mySidebar");
+
+// Get the DIV with overlay effect
+var overlayBg = document.getElementById("myOverlay");
+// changing active link class
+function highlightActiveLink() {
+  const currentPath = window.location.pathname;
+  const links = document.querySelectorAll('.w3-bar-item.w3-button[href]');
+  if (currentPath !== "/"){
+  links.forEach(link => {
+    if (link.href.endsWith(currentPath)) {
+      link.classList.add('w3-blue');
+    } else {
+      link.classList.remove('w3-blue');
+    }
+  });
+  }else{
+  actualTrtLink = document.getElementById("home_link");
+  actualTrtLink.classList.add('w3-blue');
+  
+  
+  }
+}
+
+window.addEventListener('load', highlightActiveLink);
+
+// Toggle between showing and hiding the sidebar, and add overlay effect
+function w3_open() {
+  if (mySidebar.style.display === 'block') {
+    mySidebar.style.display = 'none';
+    overlayBg.style.display = "none";
+  } else {
+    mySidebar.style.display = 'block';
+    overlayBg.style.display = "block";
+  }
+}
+
+// Close the sidebar with the close button
+function w3_close() {
+  mySidebar.style.display = "none";
+  overlayBg.style.display = "none";
+}
+function showLoadingContainer() {
+  const loadingContainer = document.getElementById('loading-animation');
+  if (loadingContainer) {
+    loadingContainer.classList.remove('hidden');
+  }
+}
+
+function hideLoadingContainer() {
+  const loadingContainer = document.getElementById('loading-animation');
+  if (loadingContainer) {
+    loadingContainer.classList.add('hidden');
+  }
+}
+</script>
+{% block scripts %}
+{% endblock %}
+</body>
+</html>

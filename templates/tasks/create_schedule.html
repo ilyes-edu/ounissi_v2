@@ -1,0 +1,123 @@
+<!-- create_schedule.html -->
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+
+    <h1>Creation TRT</h1>
+    <form method="post" id="main-form">
+        {% csrf_token %}
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+		<label for="start_time">Heure Debut:</label>
+		<input type="time" name="start_time" required id="start_time" value="08:00">
+		<label for="end_time">Heure Fin:</label>
+		<input type="time" name="end_time" required id="end_time" value="14:00">
+
+        <div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Taches</th>
+                    <th>Employee</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <select multiple class="multi_select" name="tasks_select" id="tasks-select">
+                            {% for task_type, tasks_details in tasks.items %}
+                                <optgroup label="{{ task_type }}" class="task-type-group">
+                                    {% for task in tasks_details %}
+                                        <option value="{{ task.pk }}" data-responsibility_level="{{ task.responsibility_level.value }}">{{ task }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select multiple class="multi_select" name="employees_select" id="employees-select">
+                            {% for employee in employees %}
+                                <option value="{{ employee.pk }}" data-rank="{{ employee.rank.value }}">{{ employee }}</option>
+                            {% endfor %}
+                        </select>
+
+                    </td>
+                    <td>
+                        <button type="button" onclick="fillScheduleIntermediateTables()">Distribution</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table id="task-table">
+
+                        <thead>
+
+                            <tr>
+                                <th hidden>Task ID</th>
+                                <th>Tache</th>
+                                <th>Resp Min</th>
+                                <th>Temps Assignee</th>
+                                <th>Duree Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+                    </td>
+                    <td>
+                        <table id="employee-table">
+                            <thead>
+                                <tr>
+                                    <th hidden>Employee ID</th>
+                                    <th>Employee</th>
+                                    <th>Rang</th>
+                                    <th>Temp Assigne</th>
+                                    <th>Tota Temp Trav</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+
+                    </td>
+                    <td>
+                        <button type="button" onclick="distributeTasks()">Assignation</button>
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+
+            <h2>Details TRT</h2>
+            <table class="table" id="scheduleItems-table">
+              <thead>
+                <tr>
+                  <th hidden>Task ID</th>
+                  <th>Tache</th>
+                  <th hidden>Employee ID</th>
+                  <th>Employee</th>
+                  <th>Temps Assigne</th>
+				  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+              <tfoot></tfoot>
+            </table>
+        </div>
+
+
+
+
+        <button type="button" onclick="submitData()">Enregistrer</button>
+    </form>
+
+<script src="{% static 'js/create_schedule.js' %}"></script>
+
+
+
+{% endblock %}

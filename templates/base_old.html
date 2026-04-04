@@ -1,0 +1,25 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+X
+<html>
+<head>
+  {# Load the tag library #}
+  {% load django_bootstrap5 %}
+
+  {# Load CSS and JavaScript #}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+
+  {# Display django.contrib.messages as Bootstrap alerts #}
+  {% bootstrap_messages %}
+  <meta charset="utf-8">
+  <title>{% block title %}Django Auth{% endblock %}</title>
+</head>
+<body>
+  <main>
+    {% block content %}
+    {% endblock %}
+  </main>
+</body>
+</html>

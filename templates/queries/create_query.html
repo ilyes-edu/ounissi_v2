@@ -1,0 +1,89 @@
+<!-- create_query.html -->
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+
+<h1>Creation Requetes</h1>
+    {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+
+    <form id="queryForm" method="post">
+        {% csrf_token %}
+        <label for="queryName">Query Name:</label>
+        <input type="text" id="queryName" name="queryName" required><br>
+        <label for="type">Type Requete</label>
+        <select id="type" name="type">
+        <option value="1">Xpertpharm</option>
+        <option value="0">Interne</option>
+        </select>
+        <br><br>
+
+        <div id="parameters">
+            <!-- Dynamically added input fields will appear here -->
+        </div>
+
+        <button type="button" id="addParameter">Add Parameter</button><br><br>
+
+        <label for="queryText">Query Text:</label><br>
+        <textarea id="queryText" name="queryText" required style="resize:both" rows="10" cols="70"></textarea><br><br>
+
+        <label for="help">Query Help:</label><br>
+        <textarea id="help" name="help" style="resize:both"></textarea><br><br>
+
+        <button type="submit">Create Query</button>
+        <button type="button" id="test_query">Test Query</button>
+
+    </form>
+<div id="queryResults"></div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addParameterButton = document.getElementById('addParameter');
+        const parametersDiv = document.getElementById('parameters');
+
+        let parameterIndex = 1;
+
+        addParameterButton.addEventListener('click', function() {
+            const parameterInput = document.createElement('div');
+
+            const paramNameInput = document.createElement('input');
+            paramNameInput.type = 'text';
+            paramNameInput.name = `parameter${parameterIndex}`;
+            paramNameInput.placeholder = 'Parameter Name';
+
+            const paramValueInput = document.createElement('input');
+            paramValueInput.type = 'text';
+            paramValueInput.name = `value_parameter${parameterIndex}`;
+            paramValueInput.placeholder = 'Default Value';
+
+            parameterInput.appendChild(paramNameInput);
+            parameterInput.appendChild(paramValueInput);
+            parametersDiv.appendChild(parameterInput);
+
+            parameterIndex++;
+        });
+
+        const testQueryButton = document.getElementById('test_query');
+        testQueryButton.addEventListener('click', function() {
+            const formData = new FormData(document.getElementById('queryForm'));
+
+            fetch('/queries/test_query_submission/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('queryResults').innerHTML = data;
+                console.log(data)
+            })
+
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+
+
+{% endblock %}

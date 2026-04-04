@@ -1,0 +1,8 @@
+<h1>Form pour {{ form_title }}</h1>
+<form id="modelForm" method="post" action="/submit_form/{{ form_class_name }}/">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="transfer_data" value="{{ transfer_data }}">
+
+</form>
+

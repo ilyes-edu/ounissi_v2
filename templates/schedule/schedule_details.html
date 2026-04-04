@@ -1,0 +1,355 @@
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}Suivi TRT{% endblock %}
+
+{% block content %}
+
+<style>
+  /* Basic styles for tabs */
+  .tab {
+    cursor: pointer;
+    padding: 10px;
+    width: 20%;
+    border: 1px solid #ccc;
+    display: inline-block;
+    background-color: #f9f9f9;
+  }
+  .tab:hover {
+    background-color: #ddd;
+  }
+  .tab.active {
+    background-color: #fff;
+    border-bottom: none;
+    font-weight: bold;
+  }
+  .table-container {
+    display: none;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+  .table-wrapper {
+    margin: 10px;
+  }
+</style>
+<h1>Choisir un TRT pour voir les Details</h1>
+<form method="get" action="">
+    {{ schedule_filter_form.as_p }}
+    <button type="submit" class="btn btn-success">Valider</button>
+</form>
+{% if selected_schedule %}
+<a href="{% url 'update_schedule_now' schedule_id=selected_schedule.id %}"><i class="fa fa-cloud-download"></i></a>
+<form method="post" action="{% url 'finalize_schedule' schedule_id=selected_schedule.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Finalize and Close Schedule</button>
+</form>
+
+<div class="tabs">
+  <div class="tab active" onclick="openTab(event, 'Details')">Details TRT</div>
+  <div class="tab" onclick="openTab(event, 'Employees')">Employees</div>
+  <div class="tab" onclick="openTab(event, 'Tasks')">Taches</div>
+<!--  <div class="tab" onclick="openTab(event, 'Progress')">Progression</div>-->
+</div>
+
+<div id="Details" class="table-container" style="display: block;">
+
+<h2>Taches Manuelles</h2>
+<table class="filtertable" style="width: 100%; table-layout: fixed;">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Tache</th>
+            <th>Priorite</th>
+            <th>Temps Assigne</th>
+            <th>Objectif</th>
+            <th>Progression</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for schedule_item in schedule_items %}
+        {% if schedule_item.employee != None%}
+        {% if  schedule_item.task.progress_query.query == 'N/A' or not schedule_item.task.progress_query %}
+
+        <tr>
+            <td>{{ schedule_item.employee }}</td>
+                {% if schedule_item.task_identifier != Null%}
+                  <td>{{ schedule_item.task }}:{{schedule_item.task_identifier}}</td>
+                {% else %}
+                  <td>{{ schedule_item.task }}</td>
+                {% endif %}
+                    <td>{{ schedule_item.task.priority }} </td>
+                    <td>{{ schedule_item.assigned_time }}</td>
+                {% with result=schedule_item.assigned_time|division:schedule_item.task.average_duration %}
+                    <td>{{ result }}</td>
+                {% endwith %}
+
+                    <td>
+                        <!-- Form for modifying assigned_time -->
+                        <form method="post" action="{% url 'scheduleItem_update' pk=schedule_item.id %}" id="item_update{{schedule_item.id}}">
+                            {% csrf_token %}
+                            <input type="hidden" name="schedule" value="{{ schedule_item.schedule.id }}">
+                            <input type="hidden" name="task" value="{{ schedule_item.task.id }}">
+                            <input type="hidden" name="employee" value="{{ schedule_item.employee.id }}">
+                            <input type="hidden" name="schedule_item_id" value="{{ schedule_item.id }}">
+                            <input type="hidden" name="assigned_time" value="{{ schedule_item.assigned_time }}">
+                            <select name="progression_rate" id="id_progression_rate" class="progression-rate-select" data-default="{{ schedule_item.progression_rate }}">
+                                <option value="0">0 %</option>
+                                <option value="25">25 %</option>
+                                <option value="50">50 %</option>
+                                <option value="75">75 %</option>
+                                <option value="100">100 %</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td><button type="submit" form="item_update{{schedule_item.id}}">Validez</button></td>
+                        </tr>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+    <br>
+<h2>Taches Auto</h2>
+<table class="filtertable" style="width: 100%; table-layout: fixed;">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Tache</th>
+            <th>Priorite</th>
+            <th>Objectif</th>
+            <th>Realise</th>
+            <th>Progression</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for schedule_item in schedule_items %}
+        {% if schedule_item.task.progress_query and schedule_item.task.progress_query.query != 'N/A' and schedule_item.employee != None %}
+            <tr>
+                <td>{{ schedule_item.employee }}</td>
+            {% if schedule_item.task_identifier != Null%}
+                <td>{{ schedule_item.task }}:{{schedule_item.task_identifier}}</td>
+            {% else %}
+                <td>{{ schedule_item.task }}</td>
+            {% endif %}
+                <td>{{ schedule_item.task.priority }} </td>
+            {% with result=schedule_item.assigned_time|division:schedule_item.task.average_duration %}
+                <td>{{ result }}</td>
+            {% endwith %}
+                <td>{{ schedule_item.progress_lines }}</td>
+
+                <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style=" min-width:0, max-width:200, width:{{ schedule_item.progression_rate }}">{{ schedule_item.progression_rate }}%</div>
+                </div>
+              </td>
+            </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+<!-- Tab content for Employees -->
+<div id="Employees" class="table-container">
+      <h3>Details des Employees</h3>
+  <table class="filtertable" id="EmployeeTable">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>Employee</th>
+        <th>Temps de Travail</th>
+        <th>Temps Assigne</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for employee in schedule_employees %}
+      <tr>
+        <td>{{ employee.employee.id }}</td>
+        <td>{{ employee.employee.first_name }}</td>
+        <td>{{ employee.working_hours }}</td>
+        <td>{{ employee.total_assigned_time }}</td>
+        <td>{{ employee.score}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div id="Tasks" class="table-container">
+    <h2>Details des Taches</h2>
+  <table class="filtertable" id="TasksTable">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>Type</th>
+        <th>Priorite</th>
+        <th>Designation</th>
+        <th>Temps Assigne</th>
+        <th>Temps Total</th>
+        <th>Progress</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in schedule_tasks %}
+      <tr>
+        <td>{{ task.task.id }}</td>
+        <td>{{ task.task.task_type}}</td>
+        <td>{{ task.task.priority }}</td>
+        <td>{{ task.task.task_name }}</td>
+        <td>{{ task.total_assigned_time }}</td>
+        <td>{{ task.total_time }}</td>
+        <td>{{ task.completion }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div id="Progress" class="table-container">
+
+    {% if loggedData.leader or loggedData.group.name == 'Admin' %}
+    <h5>full</h5>
+    {% else %}
+    <h5>single</h5>
+    {% endif %}
+
+    <table class="table">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            <th>Tache</th>
+            <th>Priorite</th>
+            <th>Objectif</th>
+            <th>Progression</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for schedule_item in schedule_items %}
+            {% if schedule_item.employee.user == request.user %}
+            <tr>
+                <td>{{ schedule_item.employee }}</td>
+                <td>{{ schedule_item.task }}</td>
+                <td>{{ schedule_item.task.priority }}</td>
+                {% with result=schedule_item.assigned_time|division:schedule_item.task.average_duration %}
+                <td>{{ result }}</td>
+                {% endwith %}
+
+                <td>
+                  {% if schedule_item.task.task_type.name == 'AUTO' %}
+                    {{ schedule_item.progression_rate }}
+                  {% else %}
+<!--this part will be modified later-->
+                    {{ schedule_item.progression_rate }}
+
+                    {% endif %}
+                    </td>
+
+
+
+            </tr>
+            {% endif %}
+            {% endfor %}
+    </tbody>
+</table>
+</div>
+    <!-- Modal for Form -->
+<div id="formModal" class="w3-modal" style="display: none">
+    <div class="w3-modal-content w3-animate-top w3-card-4">
+        <header class="w3-container w3-teal">
+            <span onclick="document.getElementById('formModal').style.display='none'"
+            class="w3-button w3-display-topright">&times;</span>
+            <h2>Task Form</h2>
+        </header>
+        <div id="formContainer" class="w3-container">
+            {% include 'special_forms/special_form.html' %}
+        </div>
+
+        <footer class="w3-container w3-teal">
+<br>
+
+        </footer>
+    </div>
+</div>
+{% else %}
+        <h5>Veuillez choisir un TRT a varifier</h5>
+{% endif %}
+<script defer src = "{% static 'js/js_utils.js' %}"></script>
+
+<script>
+// Wait for the DOM to fully load
+document.addEventListener('DOMContentLoaded', function() {
+
+    const formButtons = document.querySelectorAll('.form_lookup_button');
+    formButtons.forEach(button => {
+        button.addEventListener('click', submitForm);
+    });
+
+    initializeProgressionRateSelects();
+});
+
+// Submit the form asynchronously
+    function submitForm(event) {
+    event.preventDefault(); // Prevent default form submission
+
+    // Serialize form data
+    const form = event.target.closest('form');
+    const formData = new FormData(form);
+
+    fetch('/get_special_form', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        return response.text();
+    })
+    .then(data => {
+        // Add the form to the modal
+        const formContainer = document.getElementById('formContainer');
+        formContainer.innerHTML = data;
+
+        // Show the modal
+        document.getElementById('formModal').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+// Function to handle tab switching
+function openTab(evt, tabName) {
+  // Get all elements with class="table-container"
+  const tabcontent = document.getElementsByClassName("table-container");
+
+  // Loop through each tab content
+  for (let i = 0; i < tabcontent.length; i++) {
+    // Hide only elements that are not the clicked tab
+    if (tabcontent[i].id !== tabName) {
+      tabcontent[i].style.display = "none";
+    }
+  }
+
+  // Show the current tab, and add an "active" class to the button that opened the tab
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+// Initialize progression rate selects to default values
+function initializeProgressionRateSelects() {
+    const selects = document.querySelectorAll('.progression-rate-select');
+    selects.forEach(function(select) {
+        const defaultProgression = parseInt(select.getAttribute('data-default'));
+        for (let i = 0; i < select.options.length; i++) {
+            if (parseInt(select.options[i].value) === defaultProgression) {
+                select.options[i].selected = true;
+                break;
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
