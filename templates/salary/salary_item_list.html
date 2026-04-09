@@ -1,0 +1,10 @@
+<!-- templates/salary_item_list.html -->
+<h1>Salary Items</h1>
+<ul>
+  {% for salary_item in salary_items %}
+    <li>{{ salary_item.name }} - {{ salary_item.item_type }}</li>
+  {% empty %}
+    <li>No salary items found.</li>
+  {% endfor %}
+</ul>
+<a href="{% url 'salary_item_create' %}">Create Salary Item</a>

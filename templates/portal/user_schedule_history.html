@@ -1,0 +1,56 @@
+{% extends "base2.html" %}
+{% load custom_filters %}
+
+{% block title %}Home{% endblock %}
+{% block content%}
+
+<div class="w3-panel">
+  <div class="w3-row-padding" style="margin:0 -16px">
+    <form method="get" action="">
+      {{ schedule_filter_form.as_p }}
+      <button type="submit">Select TRT</button>
+    </form>
+    <div>
+        <h5><i class="fa fa-warning" style="font-size:24px;color:red"></i>Taches du {{ selected_schedule.date }}</h5>
+        <table class="filtertable w3-table w3-striped w3-white w3-border">
+          <thead>
+            <tr class="w3-light-grey">
+              <th>Tache</th>
+              <th>Priorite</th>
+              <th>Objectif</th>
+              <th>Progression</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for schedule_item in schedule_items %}
+            {% with progression=schedule_item.assigned_time|division:schedule_item.task.average_duration %}
+            <tr>
+              {% if schedule_item.task_identifier != Null%}
+              <td>{{ schedule_item.task }}:{{schedule_item.task_identifier}}</td>
+              {% else %}
+              <td>{{ schedule_item.task }}</td>
+              {% endif %}
+              <td>{{ schedule_item.task.priority }}</td>
+              <td>{{ progression }}</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:{{ schedule_item.progression_rate }}%">{{ schedule_item.progression_rate }}%</div>
+                </div>
+              </td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+  <hr>
+
+{% endblock %}
+{% block scripts %}
+<script>
+
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+*.pyd
+
+# --- Django ---
+db.sqlite3
+*.log
+local_settings.py
+staticfiles/
+media/
+
+# --- Environments & Secrets ---
+.env
+.venv
+env/
+venv/
+ENV/
+
+# --- PyCharm / JetBrains ---
+.idea/
+*.iws
+out/
+cmake-build-*/
+
+# --- Windows (The "Ghost" Files) ---
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- OS X ---
+.DS_Store
+
+# --- Project Specific ---
+# Add any specific data files or temp folders here

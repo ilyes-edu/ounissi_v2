@@ -1,0 +1,440 @@
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}Assignation Emplacements{% endblock %}
+    {% block style %}
+<style>
+    #emplacement_table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #emplacement_table th, #emplacement_table td {
+        white-space: nowrap; /* Prevents text wrapping */
+        text-align: center; /* Align text to center for better readability */
+        vertical-align: middle; /* Aligns content vertically in the middle */
+        padding: 8px; /* Adds some padding for spacing */
+    }
+
+    #emplacement_table th {
+        background-color: #f4f4f4; /* Optional: Light background for headers */
+    }
+
+
+
+    #emplacement_table input[type="checkbox"] {
+        margin: 0 5px; /* Space between checkbox and label */
+    }
+
+    .checkbox-group {
+        display: flex; /* Makes operations align horizontally */
+        gap: 10px; /* Space between operation labels */
+    }
+    .modal {
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+    }
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        border-radius: 8px;
+    }
+    .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close-button:hover,
+    .close-button:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+</style>
+
+    {% endblock %}
+
+{% block content %}
+
+<h1>Assignation des Emplacements</h1>
+<button id="save-changes" class="w3-button w3-green">Save Changes</button>
+
+<form id="groupping_by">
+    <label for="group_by">Grouper La liste par</label>
+    <input type="number" maxlength="1" id="group_by" name="group_by" value="3" max="9" min="0">
+    <a>Premieres Lettres</a>
+    <input type="submit" value="Grouper">
+</form>
+<table id="emplacement_table" class="w3-table" onload="initializeCollapseHandlers()">
+    <thead>
+        <tr>
+            <th>Group</th>
+            <th>Emplacement</th>
+            <th>Employee</th>
+            <th>Date Debut</th>
+            <th>Date Fin</th>
+            <th>Taches</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for prefix, emplacements in grouped_emplacements.items %}
+        <!-- Group Row -->
+        <tr data-group="{{ prefix }}">
+                        <td>
+                <button type="button" class="toggle-button" data-group="{{ prefix }}">▼</button>
+                {{ prefix }}
+            </td>
+            <td>Assigation par Groupe</td>
+            <td>
+                <select name="grp_employee_{{ prefix }}" onchange="set_group('{{ prefix }}')">
+                    <option value="">---------</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="date" name="grp_date_debut_{{ prefix }}" onchange="set_group('{{ prefix }}')">
+            </td>
+            <td>
+                <input type="date" name="grp_date_fin_{{ prefix }}" onchange="set_group('{{ prefix }}')">
+            </td>
+            <td>
+                {% for operation in operations %}
+                <input type="checkbox" id="grp_op_{{ prefix }}_{{ operation }}"
+                       name="grp_operation_{{ prefix }}_{{ operation }}"
+                       onchange="set_group('{{ prefix }}')">
+                <label for="grp_op_{{ prefix }}_{{ operation }}">{{ operation.designation }}</label>
+                {% endfor %}
+            </td>
+        </tr>
+        {% for emplacement in emplacements %}
+        {% if emplacement not in assigned_emplacements_dict.keys %}
+        <tr data-parent-group="{{ prefix }}" data-emplacement="{{ emplacement }}">
+            <td></td>
+            <td>{{ emplacement }}</td>
+            <td>
+                <select name="employee_{{ emplacement }}">
+                    <option value="">---------</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="date" name="date_debut_{{ emplacement }}">
+            </td>
+            <td>
+                <input type="date" name="date_fin_{{ emplacement }}">
+            </td>
+            <td>
+                {% for operation in operations %}
+                <input type="checkbox" id="op_{{ emplacement }}_{{ operation }}"
+                       name="operation_{{ emplacement }}_{{ operation }}">
+                <label for="op_{{ emplacement }}_{{ operation }}">{{ operation.designation }}</label>
+                {% endfor %}
+            </td>
+        </tr>
+
+        {% endif %}
+        {% endfor %}
+
+        {% endfor %}
+    </tbody>
+</table>
+<h1>Emplacements Assignés</h1>
+<table id="emplacement_assigne" class="w3-table">
+    <thead>
+        <tr>
+            <th>Emplacement</th>
+            <th>Employee</th>
+            <th>Date Debut</th>
+            <th>Date Fin</th>
+            <th>Taches</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for key, assigned_emplacements in assigned_emplacements_dict.items %}
+    {% for assigned_emplacement in assigned_emplacements%}
+        <tr data-parent-group="{{ prefix }}" data-emplacement="{{ emplacement }}">
+            <td>{{ key }}</td>
+            <td>
+                {{ assigned_emplacement.employee }}
+            </td>
+            <td>
+{{ assigned_emplacement.date_debut }}
+            </td>
+            <td>
+{{ assigned_emplacement.date_fin }}
+            </td>
+            <td>
+                {{ assigned_emplacement.operation.designation }}
+
+            </td>
+            <td>
+              <button class="delete-btn" data-id="{{ assigned_emplacement.id }}">Delete</button>
+
+            </td>
+        </tr>
+    {% endfor %}
+
+    {% endfor %}
+    </tbody>
+</table>
+<!-- Confirmation Modal HTML -->
+<div id="confirmationModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Confirm Changes</h2>
+        <div id="modal-body">
+            <!-- Summary will be inserted here -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="close-button">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirm-save">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function initializeCollapseHandlers() {
+    const table = document.getElementById('emplacement_table');
+
+    if (!table) return;
+
+    const toggleButtons = table.querySelectorAll('.toggle-button');
+
+    toggleButtons.forEach(button => {
+        const group = button.getAttribute('data-group');
+        const subRows = table.querySelectorAll(`tr[data-parent-group="${group}"]`);
+
+        // Check the initial state of subrows and set button text accordingly
+        const allHidden = Array.from(subRows).every(row => row.style.display === 'none');
+        button.textContent = allHidden ? '▼' : '▲';
+
+        // Add the click event listener to toggle visibility
+        button.addEventListener('click', () => {
+            const shouldHide = button.textContent === '▲'; // If expanded, hide the rows
+            subRows.forEach(row => {
+                row.style.display = shouldHide ? 'none' : 'table-row';
+            });
+
+            // Update the button text
+            button.textContent = shouldHide ? '▼' : '▲';
+        });
+    });
+}
+
+// Explicitly call the function after the table is loaded
+initializeCollapseHandlers();
+
+
+function set_group(group) {
+    // Get the group row
+    const groupRow = document.querySelector(`tr[data-group="${group}"]`);
+
+    // Group fields
+    const groupEmployeeSelect = groupRow.querySelector('select[name^="grp_employee_"]');
+    const groupDateDebutInput = groupRow.querySelector('input[name^="grp_date_debut_"]');
+    const groupDateFinInput = groupRow.querySelector('input[name^="grp_date_fin_"]');
+    const groupCheckboxes = groupRow.querySelectorAll('input[name^="grp_operation_"]');
+
+    // Values to set
+    const groupEmployee = groupEmployeeSelect.value;
+    const groupDateDebut = groupDateDebutInput.value;
+    const groupDateFin = groupDateFinInput.value;
+
+    // Get subrows for this group
+    const subRows = document.querySelectorAll(`tr[data-parent-group="${group}"]`);
+
+    subRows.forEach(subRow => {
+        // Update employee
+        const employeeSelect = subRow.querySelector('select[name^="employee_"]');
+        if (employeeSelect) employeeSelect.value = groupEmployee;
+
+        // Update dates
+        const dateDebutInput = subRow.querySelector('input[name^="date_debut_"]');
+        if (dateDebutInput) dateDebutInput.value = groupDateDebut;
+
+        const dateFinInput = subRow.querySelector('input[name^="date_fin_"]');
+        if (dateFinInput) dateFinInput.value = groupDateFin;
+
+        // Update checkboxes
+        const emplacement = subRow.getAttribute('data-emplacement'); // Get emplacement dynamically
+
+        groupCheckboxes.forEach(groupCheckbox => {
+            const operationName = groupCheckbox.name.replace('grp_', '').replace(group, emplacement); // Replace group with emplacement
+            const subCheckbox = subRow.querySelector(`input[name="${operationName}"]`);
+            if (subCheckbox) {
+                subCheckbox.checked = groupCheckbox.checked; // Update the value
+                subCheckbox.dispatchEvent(new Event('change')); // Force redraw
+                console.log(`Updated checkbox: ${operationName}, Checked: ${groupCheckbox.checked}`);
+            } else {
+                console.log(`No matching checkbox found for: ${operationName}`);
+            }
+        });
+
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Click event for save button
+    $('#save-changes').on('click', function (e) {
+        e.preventDefault();
+
+        // Prepare data for submission
+        let dataToSubmit = [];
+        $('#emplacement_table tbody tr[data-parent-group]').each(function () {
+            const emplacement = $(this).data('emplacement');
+            const employee = $(this).find('select[name^="employee_"]').val();
+            const dateDebut = $(this).find('input[name^="date_debut_"]').val();
+            const dateFin = $(this).find('input[name^="date_fin_"]').val();
+            let operations = [];
+
+            $(this).find('input[type="checkbox"][name^="operation_"]:checked').each(function () {
+                operations.push($(this).attr('name').split('_').pop()); // Extract operation identifier
+            });
+
+            if (emplacement && (employee || dateDebut || dateFin || operations.length)) {
+                dataToSubmit.push({
+                    emplacement: emplacement,
+                    employee: employee,
+                    date_debut: dateDebut,
+                    date_fin: dateFin,
+                    operations: operations
+                });
+            }
+        });
+
+        // Check if there's anything to save
+        if (dataToSubmit.length === 0) {
+            alert('No changes to save.');
+            return;
+        }
+
+        // Generate summary HTML
+        let summaryHtml = '<ul>';
+        dataToSubmit.forEach(item => {
+            summaryHtml += `<li>
+                <strong>Emplacement:</strong> ${item.emplacement},
+                <strong>Employee:</strong> ${item.employee || 'N/A'},
+                <strong>Date Debut:</strong> ${item.date_debut || 'N/A'},
+                <strong>Date Fin:</strong> ${item.date_fin || 'N/A'},
+                <strong>Operations:</strong> ${item.operations.join(', ') || 'None'}
+            </li>`;
+        });
+        summaryHtml += '</ul>';
+
+        // Display the modal with the summary
+        showModal(summaryHtml, dataToSubmit);
+    });
+
+    // Function to display the modal
+    function showModal(summaryHtml, dataToSubmit) {
+        const modal = document.getElementById('confirmationModal');
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = summaryHtml;
+        modal.style.display = 'block';
+
+        // Set up the confirm button
+        document.getElementById('confirm-save').onclick = function () {
+            submitData(dataToSubmit);
+            closeModal();
+        };
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        const modal = document.getElementById('confirmationModal');
+        modal.style.display = 'none';
+    }
+
+    // Attach the close event listener to the close button
+    const closeButton = document.getElementById('close-button');
+    if (closeButton) {
+        closeButton.addEventListener('click', closeModal);
+    }
+
+    // Function to submit data via AJAX
+    function submitData(dataToSubmit) {
+        $.ajax({
+            url: '/stock/assign_stock/', // Replace with your view URL
+            type: 'POST',
+            data: JSON.stringify(dataToSubmit),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken') // Ensure CSRF token is included
+            },
+            success: function (response) {
+                alert('Changes saved successfully!');
+            },
+            error: function (xhr) {
+                alert(xhr.responseText);
+            }
+        });
+    }
+
+    // CSRF token helper function
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + '=') {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', function () {
+        const assignment_Id = this.getAttribute('data-id');
+
+        if (confirm('Are you sure you want to delete this assignment?')) {
+          fetch(`/stock/assign_stock/delete_assignment/${assignment_Id}/`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Assignment deleted successfully.');
+              location.reload(); // Reload the page to reflect changes
+            } else {
+              alert('Error: ' + data.error);
+            }
+          })
+          .catch(error => {
+            alert('An error occurred: ' + error.message);
+          });
+        }
+      });
+    });
+});
+
+
+</script>
+{% endblock %}

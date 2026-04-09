@@ -1,0 +1,65 @@
+{% extends 'base2.html' %}
+
+{% block content %}
+  <h2>Performance Taches</h2>
+
+  <form method="get" action="{% url 'task_performance' %}">
+    <table>
+            <tr>
+            <th>Assigner</th>
+            <th>Date Debut</th>
+            <th>Date fin</th>
+            </tr>
+            <tr>
+            <td>{{ filter_form.employee }}</td>
+            <td>{{ filter_form.start_date }}</td>
+            <td>{{ filter_form.end_date }}</td>
+            </tr>
+        </table>
+<!--    {{ filter_form }}-->
+    <button type="submit">Filtrer</button>
+    <button type="reset">Effacer</button>
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th><a href="?ordering=employee">Employee</a></th>
+        <th><a href="?ordering=task">Tache</a></th>
+        <th><a href="?ordering=completion_rate">Completion</a></th>
+        <th><a href="?ordering=priority">Priorite</a></th>
+        <th><a href="?ordering=performance">Performance</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in performance_data %}
+        <tr>
+          <td>{{ task.employee }}</td>
+          <td>{{ task.task }}</td>
+          <td>{{ task.completion_rate }}</td>
+          <td>{{ task.priority }}</td>
+          <td>{{ task.performance }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+    <!-- Pagination Links -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if performance_data.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ performance_data.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ performance_data.number }} of {{ performance_data.paginator.num_pages }}.
+            </span>
+
+            {% if performance_data.has_next %}
+                <a href="?page={{ performance_data.next_page_number }}">next</a>
+                <a href="?page={{ performance_data.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endblock %}

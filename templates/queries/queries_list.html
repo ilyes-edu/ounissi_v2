@@ -1,0 +1,15 @@
+<!-- queries_list.html -->
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+
+<h1>Queries List</h1>
+
+{% for query in queries %}
+        {{ query }}
+
+{% endfor %}
+
+
+{% endblock %}

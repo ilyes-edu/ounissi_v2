@@ -1,0 +1,11 @@
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    <table>
+        {% for form in formset %}
+            {{ form.as_table }}
+        {% endfor %}
+    </table>
+    <button type="submit">Save Assignments</button>
+</form>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Schedule</title>
+</head>
+<body>
+    <h1>Select a Schedule</h1>
+    <form action="{% url 'schedule/schedule_items' %}" method="get"> <!-- Update 'schedule_items' to the name of the view that renders schedule_items_for_schedule.html -->
+        <label for="scheduleSelect">Choose a Schedule:</label>
+        <select name="schedule" id="scheduleSelect">
+            {% for schedule in schedules %}
+                <option value="{{ schedule.id }}">{{ schedule.schedule_name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Show Schedule Items">
+    </form>
+</body>
+</html>

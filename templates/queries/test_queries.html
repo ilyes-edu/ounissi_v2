@@ -1,0 +1,87 @@
+<!-- test_queries.html -->
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+
+<h1>Test Queries</h1>
+
+<form id="queryForm" method="post"> <!--action="{% url 'execute_query' %}">-->
+    {% csrf_token %}
+    <label for="query">Select a Query:</label>
+    <select id="query" name="query">
+        <option value="">Select a Query</option>
+        {% for query in queries %}
+            <option value="{{ query.id }}">{{ query.name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <div id="parameters">
+        <!-- Parameter inputs will be added here dynamically -->
+    </div>
+
+    <button type="button" id="submitButton">Run Query</button>
+</form>
+<h4 id="queryTitle"></h4>
+<div id="queryResults">
+
+    {% include 'queries/query_result.html' %}
+</div> <!-- Placeholder for displaying query results -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const querySelect = document.getElementById('query');
+    const parametersDiv = document.getElementById('parameters');
+    const form = document.getElementById('queryForm');
+
+    querySelect.addEventListener('change', function() {
+        const selectedQueryId = querySelect.value;
+        const queryTitle = document.getElementById('queryTitle');
+        queryTitle.innerHTML = "Resultats " + $("#query option:selected").text();
+
+        // Fetch query details including parameters
+        fetch(`/get_query_details/${selectedQueryId}/`)
+        .then(response => response.json())
+        .then(data => {
+
+            // Clear previous parameter inputs
+            parametersDiv.innerHTML = '';
+
+            // Dynamically generate parameter inputs
+            data.parameters.forEach(parameter => {
+                const parameterInput = document.createElement('input');
+                parameterInput.type = 'text';
+                parameterInput.name = parameter.name;
+                parameterInput.placeholder = parameter.name;
+                parametersDiv.appendChild(parameterInput);
+
+            });
+
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    // Attach event listener to form submission
+    const testQueryButton = document.getElementById('submitButton');
+        testQueryButton.addEventListener('click', function() {
+        // Clear previous query results
+        document.getElementById('queryResults').innerHTML = 'Loading...';
+        showLoadingContainer()
+        const formData = new FormData(form);
+
+   fetch('/queries/execute_query/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+            hideLoadingContainer()
+                document.getElementById('queryResults').innerHTML = data;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+});
+
+</script>
+
+{% endblock %}

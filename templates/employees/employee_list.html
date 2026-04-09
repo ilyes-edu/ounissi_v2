@@ -1,0 +1,30 @@
+<!-- templates/employee_list.html -->
+{% extends "base2.html" %}
+
+{% block title %}Employee List{% endblock %}
+
+{% block content %}
+<h2>Employee List</h2>
+<table class="filtertable">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Prenom</th>
+      <th>Nom</th>
+      <th>ZK ID</th>
+      <th>Xpert ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for employee in employees %}
+    <tr>
+      <td>{{ employee.id }}</td>
+      <td>{{ employee.first_name }}</td>
+      <td>{{ employee.last_name }}</td>
+      <td>{{ employee.zk_id }}</td>
+      <td>{{ employee.xp_id }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

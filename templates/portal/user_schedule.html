@@ -1,0 +1,148 @@
+{% extends "base2.html" %}
+{% load custom_filters %}
+
+{% block title %}Home{% endblock %}
+
+{% block content%}
+
+
+  <div class="w3-panel">
+    <div class="w3-row-padding" style="margin:0 -16px">
+      <div>
+        {% if not current_schedule %}
+        <h5 style="color:red">Pas de TRT en cours</h5>
+        {% else %}
+        <h5>TRT en Cours</h5>
+        <h4>Taches du {{ selected_schedule.date }}</h4>
+
+        <table class="filtertable w3-table w3-striped w3-white w3-border">
+          <thead>
+            <tr class="w3-light-grey">
+              <th>Tache</th>
+              <th>Priorite</th>
+              <th>Objectif</th>
+              <th>Progression</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for schedule_item in schedule_items %}
+            {% with progression=schedule_item.assigned_time|division:schedule_item.task.average_duration %}
+            <tr>
+              {% if schedule_item.task_identifier != Null%}
+              <td>{{ schedule_item.task }}:{{schedule_item.task_identifier}}</td>
+              {% else %}
+              <td>{{ schedule_item.task }}</td>
+              {% endif %}
+              <td>{{ schedule_item.task.priority }}</td>
+              <td>{{ progression }}</td>
+              <td>
+                <div class="w3-grey">
+                  <div class="w3-container w3-left w3-green" style="width:{{ schedule_item.progression_rate }}">{{ schedule_item.progression_rate }}%</div>
+                </div>
+              </td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+  <hr>
+
+    <h5>Menus Saisie </h5>
+    <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+
+      {% for task_saisie in tasks_saisie %}
+        {%if task_saisie.menu %}
+      <tr>
+        <td width="90%">{{ task_saisie.task_name }}</td>
+        <td>
+          <form id="form_lookup_form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="task_id" value="{{ task_saisie.id }}">
+            <input type="hidden" name="employee_id" value="{{ logged_data.employee.id }}">
+            <input type="hidden" name="selected_schedule" value="{{ selected_schedule.id }}">
+            <button type="button" class="form_lookup_button" style="form_lookup_button btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+        {% endif %}
+      {% endfor %}
+    </table>
+
+    <h5>Taches Sur Demande</h5>
+    <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+
+      {% for task_demande in tasks_demande %}
+      <tr>
+        <td width="90%">{{ task_demande.task_name }}</td>
+        <td>
+          <form method="post" action="{% url 'add_or_edit_schedule_item' %}">
+            {% csrf_token %}
+            <input type="hidden" name="task" value="{{ task_demande.id }}">
+            <input type="hidden" name="employee" value="{{ logged_data.employee.id }}">
+            <input type="hidden" name="schedule" value="{{ selected_schedule.id }}">
+            <input type="hidden" name="assigned_time" value="{{ task_demande.average_duration }}">
+            <input type="hidden" name="progression_rate" value="100">
+            <button type="submit" style="btn bg-transparent btn-outline-primary"><i class="fa fa-plus"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+    <!-- Modal for Form -->
+  <div id="formModal" class="w3-modal">
+    <div class="w3-modal-content w3-animate-top w3-card-4">
+      <header class="w3-container w3-teal">
+        <span onclick="document.getElementById('formModal').style.display='none'"
+        class="w3-button w3-display-topright">&times;</span>
+        <h2>Task Form</h2>
+      </header>
+      <div id="formContainer" class="w3-container">
+        {% include 'tasks/model_form.html' %}
+      </div>
+      <footer class="w3-container w3-teal">
+        <button type="submit" form="modelForm">Submit</button>
+      </footer>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const formButtons = document.querySelectorAll('.form_lookup_button');
+  formButtons.forEach(button => {
+    button.addEventListener('click', submitForm);
+  });
+});
+
+// Submit the form asynchronously
+function submitForm(event) {
+  event.preventDefault(); // Prevent default form submission
+
+  // Serialize form data
+  const formData = new FormData(document.getElementById('form_lookup_form'));
+
+  fetch('/get_model_form', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': '{{ csrf_token }}'
+    }
+  })
+  .then(response => response.text())
+  .then(data => {
+    // Add the form to the modal
+    document.getElementById('formContainer').innerHTML = data;
+    // Show the modal
+    document.getElementById('formModal').style.display = 'block';
+  })
+  .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

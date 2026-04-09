@@ -1,0 +1,57 @@
+<!-- task_create.html -->
+
+{% extends "base2.html" %}
+
+{% block content %}
+  <h2>Creation de Taches</h2>
+  <form method="post" action="{% url 'create_task' %}" class="form">
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    <div class="form-group">
+      <label for="{{ form.task_type.id_for_label }}">Type:</label>
+      {{ form.task_type }}
+      {{ form.task_type.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.task_name.id_for_label }}">Nom de la Tache:</label>
+<!--      {{ form.task_name }}-->
+      <input id="{{ form.task_name.id_for_label }}" name="{{ form.task_name.name }}" size="100">
+      {{ form.task_name.errors }}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.priority.id_for_label }}">Priorite:</label>
+      {{ form.priority }}
+      {{ form.priority.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.average_duration.id_for_label }}">Duree moyenne:</label>
+      <input type="time" name="{{form.average_duration.name}}" step="1" value="00:00:00">
+      {{ form.average_duration.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.responsibility_level.id_for_label }}">Rang Minimal:</label>
+      {{ form.responsibility_level }}
+      {{ form.responsibility_level.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.repeat_freq.id_for_label }}">Frequence:</label>
+      {{ form.repeat_freq }} Jours
+      {{ form.repeat_freq.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.task_description.id_for_label }}">Description:</label>
+      {{ form.task_description }}
+      {{ form.task_description.errors }}
+    </div>
+
+    <button type="submit">Create Task</button>
+  </form>
+
+{% endblock %}

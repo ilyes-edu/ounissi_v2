@@ -1,0 +1,21 @@
+<!-- templates/home.html -->
+{% extends "base2.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<form>
+    <select multiple class="chosen_multi_select" name="tasks_select" id="tasks-select">
+        <optgroup label="group1" class="task-type-group">
+            <option value="val1" >option1</option>
+            <option value="val2" >option2</option>
+            <option value="val3" >option3</option>
+        </optgroup>
+        <optgroup label="group2" class="task-type-group">
+            <option value="val1" >option1</option>
+            <option value="val2" >option2</option>
+            <option value="val3" >option3</option>
+        </optgroup>
+    </select>
+</form>
+{% endblock %}

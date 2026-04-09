@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Import</title>
+</head>
+<body>
+    <h1>Imported Attendance Logs</h1>
+    {% if attendance_logs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Attendance ID</th>
+                    <th>ZK ID</th>
+                    <!-- Add other relevant columns here -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in attendance_logs %}
+                    <tr>
+                        <td>{{ log.attendance_id }}</td>
+                        <td>{{ log.zk_id }}</td>
+                        <!-- Display other relevant data here -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No attendance logs found.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+<h2>Schedule: {{ schedule.schedule_name }}</h2>
+
+<h3>Tasks</h3>
+<ul>
+  {% for schedule_task in schedule_tasks %}
+    <li>{{ schedule_task.task.task_name }}</li>
+  {% endfor %}
+</ul>
+
+<h3>Employees</h3>
+<ul>
+  {% for schedule_employee in schedule_employees %}
+    <li>{{ schedule_employee.employee.first_name }}</li>
+  {% endfor %}
+</ul>

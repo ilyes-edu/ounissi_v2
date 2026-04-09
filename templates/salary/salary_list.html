@@ -1,0 +1,74 @@
+<!-- salary_list.html -->
+{% extends "base2.html" %}
+{% block title %}Salary List{% endblock %}
+{% block content %}
+  <h2>Salary List</h2>
+  <form method="get" action="">
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="employee">Employee</label>
+        <select name="employee" id="employee" class="form-control">
+          <option value="" selected>Select an Employee</option>
+          {% for employee in employees %}
+            <option value="{{ employee.id }}">{{ employee }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="month">Month</label>
+        <input type="month" name="month" id="month" class="form-control">
+      </div>
+    </div>
+  <button type="submit" class="btn btn-primary">Filter</button>
+</form>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Month</th>
+        <th>Total Amount</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for salary in salaries %}
+        <tr>
+          <td>{{ salary.employee }}</td>
+          <td>{{ salary.month|date:"F Y" }}</td>
+          <td>{{ salary.total_salary }}</td>
+          <td>
+            <button class="btn btn-primary" data-salary-id="{{ salary.id }}" data-toggle="modal" data-target="#editSalaryModal">
+              Modifier
+            </button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+<!-- Edit Salary Detail Modal -->
+<div class="modal fade" id="editSalaryModal" tabindex="-1" role="dialog" aria-labelledby="editSalaryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Modal content goes here -->
+    </div>
+  </div>
+</div>
+<script>
+  $('#editSalaryModal').on('shown.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const salaryId = button.data('salary-id');
+
+    // Make an AJAX request to retrieve salary details for the given salary ID
+    $.ajax({
+      type: 'GET',
+      url: `/get_salary_details/${salaryId}/`,  // Replace with your actual URL
+      success: function(response) {
+        // Load the retrieved salary details into the modal content
+        $('.modal-content').html(response);
+      },
+    });
+  });
+</script>
+
+{% endblock %}

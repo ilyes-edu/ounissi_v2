@@ -1,0 +1,37 @@
+<!-- templates/tasks/task_list.html -->
+
+{% extends 'base2.html' %}
+
+{% block content %}
+    <h2>Task List</h2>
+    <!-- Task List Table -->
+    <table class="filtertable">
+        <thead>
+            <tr>
+                <th>Tache</th>
+                <th>Type</th>
+                <th>Designation</th>
+                <th>Priorite</th>
+                <th>Niv min</th>
+                <th>Requette</th>
+                <!-- Add other headers for fields you want to support for ordering -->
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for task in tasks %}
+                <tr>
+                    <td>{{ task.task_name }}</td>
+                    <td>{{ task.task_type }}</td>
+                    <td>{{ task.task_description }}</td>
+                    <td>{{ task.priority }}</td>
+                    <td>{{ task.responsibility_level }}</td>
+                    <td>{{ task.progress_query.query }}</td>
+                    <!-- Add more cells as needed -->
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+{% endblock %}

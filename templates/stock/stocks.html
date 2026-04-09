@@ -1,0 +1,29 @@
+{% extends 'base2.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}Stocks{% endblock %}
+
+{% block content %}
+
+<h1>Stock</h1>
+
+<table class="table filtertable no-footer w3-table w3-striped w3-white w3-border" style="width:100%;">
+    <thead>
+      {% for column in stock.columns %}
+        <th>{{ column }}</th>
+      {% endfor %}
+    </thead>
+    <tbody>
+      {% for row in stock.values %}
+      <tr>
+      {% for col in row %}
+        <td>{{ col }}</td>
+      {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+      </table>
+<script>
+
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base2.html" %}
+
+{% block content %}
+  <h2>Add or Update Salary Details</h2>
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="employee">Employee</label>
+        <select name="employee" id="employee" class="form-control">
+          <option value="" selected>Select an Employee</option>
+          {% for employee in employees %}
+            <option value="{{ employee.id }}">{{ employee.last_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="month">Month</label>
+        <input type="month" name="month" id="month" class="form-control">
+      </div>
+    </div>
+
+    {{ formset.management_form }}
+    
+    {% for form in formset %}
+      <div class="form-row">
+        <div class="form-group col-md-5">
+          <label for="{{ form.salary_item.id_for_label }}">Salary Item</label>
+          {{ form.salary_item }}
+        </div>
+        <div class="form-group col-md-5">
+          <label for="{{ form.value.id_for_label }}">Value</label>
+          {{ form.value }}
+        </div>
+      </div>
+    {% endfor %}
+    
+    <button type="submit" class="btn btn-primary">Save Salary Details</button>
+  </form>
+{% endblock %}

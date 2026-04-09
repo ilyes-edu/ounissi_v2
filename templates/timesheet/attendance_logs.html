@@ -1,0 +1,141 @@
+
+{% extends "base2.html" %}
+
+{% block title %}Attendance Logs{% endblock %}
+
+{% block content %}
+  <h2>Liste Presence</h2>
+      <div class="form-group ml-3">
+    <label for="terminal">Choisir un terminal:</label>
+    <select name="terminal" id="terminal" class="form-control">
+      <option value="">Tous</option>
+      {% for terminal in terminals %}
+        <option value="{{ terminal.id }}">{{ terminal.terminal_id }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if connection_status %}
+    <p>Connexion Terminal: <span style="color: green">OK</span> </p>
+    <p>Si la liste contien des lignes avec des employés inexistants:<br>
+      <ul>
+          <li>Identifier les employés inexistants.</li>
+          <li>desactiver l'employé du terminal, ou ajouter le sur l'application</li>
+      </ul>
+    </p>
+  {% else %}
+    <p>Connexion Terminal: <span style="color: red">Echec</span></p>
+  {% endif %}
+
+  <form method="get" class="form-inline mb-3">
+    <div class="form-group">
+      <p>Filtrer la liste   </p>
+      <label for="start_date">Date debut:</label>
+      <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control mx-2">
+    </div>
+    <div class="form-group">
+      <label for="end_date">Date fin:</label>
+      <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control mx-2">
+    </div>
+    <div class="form-group ml-3">
+      <label for="employee">Employee:</label>
+      <select name="employee" id="employee" class="form-control">
+        <option value="">Tous</option>
+        {% for employee in employees %}
+          <option value="{{ employee.zk_id }}" {% if selected_employee == employee.zk_id %}selected{% endif %}>{{ employee.first_name}} {{ employee.last_name}}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Filter</button><p>   </p>
+    <button type="button" class="btn btn-success" id="save-button">Save</button>
+
+  </form>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Code Employee</th>
+        <th>Nom Employee</th>
+        <th>Date</th>
+        <th>Entree 1</th>
+        <th>Sortie 1</th>
+        <th>Entree 2</th>
+        <th>Sortie 2</th>
+        <th>Entree 3</th>
+        <th>Sortie 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in data %}
+        <tr>
+          <td>{{ d.user_id }}</td>
+          <td>{{ d.employee_name }}</td>
+<!--          <td>{{ d.date }}</td>-->
+          <td><span class="timestamp" data-timestamp="{{ d.date }}"></span></td>
+          <td>{{ d.timestamp_1 }}</td>
+          <td>{{ d.timestamp_2 }}</td>
+          <td>{{ d.timestamp_3 }}</td>
+          <td>{{ d.timestamp_4 }}</td>
+          <td>{{ d.timestamp_5 }}</td>
+          <td>{{ d.timestamp_6 }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const timestampElements = document.querySelectorAll('.timestamp');
+  timestampElements.forEach(function(element) {
+    const timestamp = element.getAttribute('data-timestamp');
+    const date = new Date(parseInt(timestamp, 10));
+    element.textContent = date.toLocaleDateString(); // Customize the date format as needed
+  });
+});
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const timestampElements = document.querySelectorAll('.timestamp');
+        timestampElements.forEach(function (element) {
+            const timestamp = element.getAttribute('data-timestamp');
+            const date = new Date(parseInt(timestamp, 10));
+            element.textContent = date.toLocaleDateString(); // Customize the date format as needed
+        });
+        // Add an event listener for the Save button
+        const saveButton = document.getElementById('save-button');
+        if (saveButton) {
+            saveButton.addEventListener('click', function () {
+                // Get the selected date range and employee data
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+                const selectedEmployee = document.getElementById('employee').value;
+
+                // Prepare the data to send
+                const data = {
+                    start_date: startDate,
+                    end_date: endDate,
+                    employee: selectedEmployee
+                };
+
+                // Perform an AJAX POST request to your Django view
+                fetch('save-data/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token }}", // Include your CSRF token here
+                    },
+                    body: JSON.stringify(data),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data (e.g., show a success message)
+                    alert('Data saved successfully.');
+                })
+                .catch(error => {
+                    // Handle any errors (e.g., show an error message)
+                    console.error('Error:', error);
+                });
+            });
+        }
+    });
+
+</script>
+{% endblock %}

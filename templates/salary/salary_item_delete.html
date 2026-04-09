@@ -1,0 +1,8 @@
+<!-- templates/salary_item_delete.html -->
+<h1>Delete Salary Item</h1>
+<p>Are you sure you want to delete this salary item?</p>
+<p>{{ salary_item.name }} - {{ salary_item.item_type }}</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>
