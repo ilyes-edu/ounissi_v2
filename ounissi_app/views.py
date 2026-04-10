@@ -1,6 +1,6 @@
 import json
-import time
-from datetime import datetime, date, timedelta
+# import time
+from datetime import datetime, timedelta, time
 from django.apps import apps
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.module_loading import import_string
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.db import IntegrityError, connection
 import pandas as pd
 
@@ -24,10 +24,12 @@ from .decorators import with_logged_data
 # Import the new service layer
 from . import schedule_service
 
+
 @login_required
 def timesheet_list(request):
     filter_form = TimesheetFilterForm(request.GET)
 
+    # 1. Date boundaries
     today = timezone.localtime().date()
     start_date = today.replace(day=1)
     end_date = today
@@ -57,17 +59,20 @@ def timesheet_list(request):
 
     timesheets = timesheets.order_by('employee', 'date')
 
+    # 2. XpertPharm Audit Fetch
     xpert_logs_map = {}
     if timesheets.exists():
         query_str = """
-                    SELECT CAST(CREATED_ON AS DATE) AS OP_DATE,
-                           CREATED_BY AS OP_USER,
+                    SELECT CAST(CREATED_ON AS DATE)         AS OP_DATE,
+                           CREATED_BY                       AS OP_USER,
                            CAST(MIN(CREATED_ON) AS TIME(0)) AS FIRST_LOG,
                            CAST(MAX(CREATED_ON) AS TIME(0)) AS LAST_LOG
                     FROM SYS_OBJET_TRACE WITH (NOLOCK)
                     WHERE CREATED_ON >= :start_date
-                      AND CREATED_ON < :end_date
-                      AND (:xp_id = '%%' OR CREATED_BY = :xp_id)
+                      AND CREATED_ON \
+                        < :end_date
+                      AND (:xp_id = '%%' \
+                       OR CREATED_BY = :xp_id)
                     GROUP BY CREATED_BY, CAST (CREATED_ON AS DATE)
                     OPTION (RECOMPILE);
                     """
@@ -85,24 +90,72 @@ def timesheet_list(request):
         except Exception as e:
             print(f"XpertPharm Log Fetch Failed: {e}")
 
+    # 3. Data Assembly
     timesheets_with_hours = []
     for ts in timesheets:
-        hours = ts.calculate_working_hours()
+        raw_hours = ts.calculate_working_hours() or 0
+        bio_hours = timedelta(hours=float(raw_hours))
         log = xpert_logs_map.get((str(ts.employee.xp_id), str(ts.date)), {'first': '--', 'last': '--'})
+
+        xp_total_str = "--"
+        warning = False
+
+        if log['first'] != '--' and log['last'] != '--':
+            try:
+                # We use 'time' (the type we just imported) for the check
+                t1_val = log['first']
+                t2_val = log['last']
+
+                # Convert to time objects if they aren't already
+                t1_obj = t1_val if isinstance(t1_val, time) else datetime.strptime(str(t1_val), '%H:%M:%S').time()
+                t2_obj = t2_val if isinstance(t2_val, time) else datetime.strptime(str(t2_val), '%H:%M:%S').time()
+
+                # Combine with a dummy date to allow subtraction
+                today = datetime.today()
+                dt1 = datetime.combine(today, t1_obj)
+                dt2 = datetime.combine(today, t2_obj)
+
+                xp_delta = dt2 - dt1
+                total_seconds = int(xp_delta.total_seconds())
+
+                if total_seconds > 0:
+                    h, remainder = divmod(total_seconds, 3600)
+                    m, _ = divmod(remainder, 60)
+                    xp_total_str = f"{h:02d}:{m:02d}"
+
+                # --- WARNING LOGIC ---
+                if xp_delta > (bio_hours + timedelta(minutes=5)):
+                    warning = True
+                elif bio_hours.total_seconds() == 0 and total_seconds > 300:
+                    warning = True
+
+            except Exception as e:
+                print(f"DEBUG Error for {ts.employee}: {e}")
+
+        # Missing Logout Check
+        if (ts.start_time and not ts.end_time) or \
+                (ts.start_time_2 and not ts.end_time_2) or \
+                (ts.start_time_3 and not ts.end_time_3):
+            warning = True
+
         timesheets_with_hours.append({
             'obj': ts,
-            'hours': hours,
+            'hours': bio_hours,
             'xp_first': log['first'],
-            'xp_last': log['last']
+            'xp_last': log['last'],
+            'xp_total': xp_total_str,
+            'warning': warning
         })
 
+    # 4. Define the context before returning
     context = {
         'filter_form': filter_form,
         'timesheets_with_hours': timesheets_with_hours,
-        'employees': Employee.objects.all(), # Added for the table dropdowns
-        'logged_data': getLoggedData(request)
+        'logged_data': getLoggedData(request) if 'getLoggedData' in globals() else None
     }
+
     return render(request, 'timesheet/timesheet_list.html', context)
+
 
 @login_required
 def timesheet_create(request):
@@ -1603,3 +1656,29 @@ def user_schedules_history(request, schedule_id=None):
         context.update(sched_data)
 
     return render(request, 'portal/user_schedule_history.html', context)
+
+
+@login_required
+def my_timesheet(request):
+    # Fetch only this user's data
+    employee = request.user.employee  # Assuming a 1-to-1 link
+
+    # Default to current month
+    today = timezone.localtime().date()
+    timesheets = Timesheet.objects.filter(
+        employee=employee,
+        date__month=today.month,
+        date__year=today.year
+    ).order_by('-date')
+
+    # Get remaining syncs for today
+    sync_record, created = UserSyncLog.objects.get_or_create(
+        user=request.user,
+        date=today
+    )
+    remaining_syncs = max(0, 3 - sync_record.count)
+
+    return render(request, 'portal/my_timesheet.html', {
+        'timesheets': timesheets,
+        'remaining_syncs': remaining_syncs,
+    })

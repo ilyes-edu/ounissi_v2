@@ -1,4 +1,3 @@
-from typing import Any
 from datetime import datetime, timedelta
 from decimal import Decimal
 from django.db import models
@@ -7,7 +6,6 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from accounts.models import Employee, Rank
 from . import utils
-from django.db.models import F, ExpressionWrapper, fields
 
 User = get_user_model()
 
@@ -500,3 +498,12 @@ class XpertServer(models.Model):
             XpertServer.objects.exclude(id=self.id).update(active=False)
 
         super(XpertServer, self).save(*args, **kwargs)
+
+
+class UserSyncLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('user', 'date')

@@ -22,72 +22,87 @@
             {{ filter_form.employees }}
         </div>
     </div>
-    <button type="submit" >Filter</button>
+    <button type="submit" class="w3-button w3-blue w3-round w3-margin-top">
+    Filtrer
+</button>
 </form>
 <div class="w3-container w3-margin-top">
-    <table class="w3-table-all w3-card-4">
+    <div class="w3-row w3-margin-bottom w3-padding-16">
+        <div class="w3-col l6">
+            <h3 class="w3-text-dark-grey"><b>Contrôle des Présences (Optimisé)</b></h3>
+        </div>
+        <div class="w3-col l6 w3-right-align">
+            <button id="bulk-btn" onclick="executeBulkValidation()" class="w3-button w3-green w3-round-large w3-card-4">
+                ✅ Valider toute la liste
+            </button>
+        </div>
+    </div>
+
+    <table class="w3-table-all w3-card-4" id="timesheet-table">
         <thead>
-            <tr class="w3-light-grey">
+            <tr class="w3-light-grey w3-small">
                 <th>Employé</th>
                 <th>Date</th>
                 <th colspan="2" class="w3-center w3-border-left">Session 1</th>
                 <th colspan="2" class="w3-center w3-border-left">Session 2</th>
                 <th colspan="2" class="w3-center w3-border-left">Session 3</th>
-                <th class="w3-border-left">Total</th>
-                <th colspan="2" class="w3-center w3-pale-blue w3-border-left">Audit XpertPharm</th>
-                <th>Actions</th>
-            </tr>
-            <tr class="w3-small">
-                <th></th><th></th>
-                <th class="w3-border-left">In</th><th>Out</th>
-                <th class="w3-border-left">In</th><th>Out</th>
-                <th class="w3-border-left">In</th><th>Out</th>
-                <th class="w3-border-left">Heures</th>
-                <th class="w3-pale-blue w3-border-left">First</th><th class="w3-pale-blue">Last</th>
-                <th></th>
+                <th class="w3-border-left">Bio Total</th>
+                <th colspan="2" class="w3-center w3-pale-blue w3-border-left">Audit Xpert</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for item in timesheets_with_hours %}
-            <tr>
-                <form method="post" action="{% url 'update_timesheet' item.obj.id %}">
-                    {% csrf_token %}
-                    <td>
-                        <select name="employee" class="w3-select w3-border w3-round" style="width:150px">
-                            <option value="{{ item.obj.employee.id }}">{{ item.obj.employee }}</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="date" name="date" value="{{ item.obj.date|date:'Y-m-d' }}" class="w3-input w3-border w3-round" readonly>
-                    </td>
+            <tr id="row-{{ item.obj.id }}"
+                class="{% if item.obj.is_confirmed %}w3-pale-green{% elif item.warning %}w3-pale-red{% endif %}"
+                title="{% if item.obj.is_confirmed %}Déjà validé - Toujours modifiable{% endif %}">
 
-                    <td class="w3-border-left"><input type="time" name="start_time" value="{{ item.obj.start_time|time:'H:i' }}" class="w3-input w3-border"></td>
-                    <td><input type="time" name="end_time" value="{{ item.obj.end_time|time:'H:i' }}" class="w3-input w3-border"></td>
+                <td>
+                    {% if item.obj.is_confirmed %}
+                        <span class="w3-text-green" title="Validé">●</span>
+                    {% endif %}
+                    {{ item.obj.employee }}
+                </td>
+                <td class="w3-center"><b>{{ item.obj.date|date:'d/m' }}</b></td>
 
-                    <td class="w3-border-left"><input type="time" name="start_time_2" value="{{ item.obj.start_time_2|time:'H:i' }}" class="w3-input w3-border"></td>
-                    <td><input type="time" name="end_time_2" value="{{ item.obj.end_time_2|time:'H:i' }}" class="w3-input w3-border"></td>
+                <td class="w3-border-left"><input type="time" class="start_time" value="{{ item.obj.start_time|time:'H:i' }}"></td>
+                <td><input type="time" class="end_time" value="{{ item.obj.end_time|time:'H:i' }}"></td>
 
-                    <td class="w3-border-left"><input type="time" name="start_time_3" value="{{ item.obj.start_time_3|time:'H:i' }}" class="w3-input w3-border"></td>
-                    <td><input type="time" name="end_time_3" value="{{ item.obj.end_time_3|time:'H:i' }}" class="w3-input w3-border"></td>
+                <td class="w3-border-left"><input type="time" class="start_time_2" value="{{ item.obj.start_time_2|time:'H:i' }}"></td>
+                <td><input type="time" class="end_time_2" value="{{ item.obj.end_time_2|time:'H:i' }}"></td>
 
-                    <td class="w3-border-left w3-center">
-                        <span class="w3-tag w3-round w3-dark-grey">{{ item.hours|hours_minutes }}</span>
-                    </td>
+                <td class="w3-border-left"><input type="time" class="start_time_3" value="{{ item.obj.start_time_3|time:'H:i' }}"></td>
+                <td><input type="time" class="end_time_3" value="{{ item.obj.end_time_3|time:'H:i' }}"></td>
 
-                    <td class="w3-border-left w3-text-blue w3-center"><b>{{ item.xp_first }}</b></td>
-                    <td class="w3-text-blue w3-center"><b>{{ item.xp_last }}</b></td>
+                <td class="w3-border-left w3-center">
+                    <span class="w3-tag w3-round {% if item.obj.is_confirmed %}w3-green{% else %}w3-dark-grey{% endif %}">
+                        {{ item.hours|hours_minutes }}
+                    </span>
+                </td>
 
-                    <td>
-                        <button type="submit" class="w3-button w3-blue w3-round w3-small">💾</button>
-                    </td>
-                </form>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="12" class="w3-center">Aucun enregistrement trouvé pour cette période.</td>
+                <td class="w3-border-left w3-text-blue w3-small">
+                    {{ item.xp_first|default:"--" }} → {{ item.xp_last|default:"--" }}
+                </td>
+                <td class="w3-center">
+                    <b class="{% if item.warning %}w3-text-red{% else %}w3-text-blue{% endif %}">
+                        {{ item.xp_total }}
+                    </b>
+                </td>
+
+                <td>
+                    <button onclick="saveSingleLine({{ item.obj.id }})"
+                            class="w3-button w3-tiny w3-blue w3-round"
+                            id="btn-{{ item.obj.id }}">💾</button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+<script>
+    // Define Django-specific variables for the external JS file
+    const NINJA_API_URL = "{% url 'api-1.0.0:bulk_update_timesheets' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+ <script src="{% static 'js/timesheet_ninja.js' %}"></script>
 {% endblock %}

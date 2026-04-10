@@ -1,11 +1,33 @@
 from django import template
+from datetime import timedelta
 
 register = template.Library()
 
 @register.filter(name='hours_minutes')
 def hours_minutes(value):
-    hours, minutes = divmod(int(value * 60), 60)
-    return f'{hours:02d}:{minutes:02d}'
+    """
+    Converts a timedelta or integer minutes into a HH:MM string.
+    """
+    if not value:
+        return "00:00"
+
+    # If it's a timedelta (which our new view sends)
+    if isinstance(value, timedelta):
+        total_seconds = int(value.total_seconds())
+        # Handle negative timedeltas if they exist
+        abs_seconds = abs(total_seconds)
+        hours = abs_seconds // 3600
+        minutes = (abs_seconds % 3600) // 60
+        return f"{'-' if total_seconds < 0 else ''}{hours:02d}:{minutes:02d}"
+
+    # Fallback if it's still receiving an integer (old logic)
+    try:
+        total_minutes = int(value)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+        return f"{hours:02d}:{minutes:02d}"
+    except (ValueError, TypeError):
+        return "00:00"
 
 @register.filter(name='model_fields')
 def get_model_fields(queryset):

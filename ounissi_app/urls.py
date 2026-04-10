@@ -3,9 +3,9 @@ from django.urls import path, include
 from django.views.generic.base import TemplateView
 from . import views
 import accounts.views
-
+from .api import ninja_api
 urlpatterns = [
-    # path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("api/", ninja_api.urls),
     path('home/', views.testconn, name='homeold'),
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
@@ -81,6 +81,7 @@ urlpatterns = [
     # users URLs
     path('', views.schedule_current, name='home'),
     path('history/schedules', views.user_schedules_history, name='user_schedule_history'),
+    path('my-timesheet/', views.my_timesheet, name='my_timesheet'),
 
     #Stock URLs
     path('stock/', views.get_stock, name='etat_stocks'),

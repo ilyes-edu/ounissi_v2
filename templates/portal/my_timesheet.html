@@ -1,0 +1,68 @@
+{% extends "base2.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="w3-container w3-margin-top">
+    <div class="w3-row">
+        <div class="w3-col l8">
+            <h3>Historique de mes Pointages</h3>
+        </div>
+        <div class="w3-col l4 w3-right-align">
+            <button id="sync-btn" onclick="triggerSync()" 
+                    class="w3-button w3-blue w3-round-large {% if remaining_syncs == 0 %}w3-disabled{% endif %}">
+                🔄 Sync Terminal ({{ remaining_syncs }} restants)
+            </button>
+        </div>
+    </div>
+
+    <table class="w3-table-all w3-card w3-margin-top">
+        <thead>
+            <tr class="w3-light-grey">
+                <th>Date</th>
+                <th>Entrée 1</th>
+                <th>Sortie 1</th>
+                <th>Entrée 2</th>
+                <th>Sortie 2</th>
+                <th>Total Heures</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ts in timesheets %}
+            <tr>
+                <td>{{ ts.date|date:"d/m/Y" }}</td>
+                <td>{{ ts.start_time|time:"H:i"|default:"--" }}</td>
+                <td>{{ ts.end_time|time:"H:i"|default:"--" }}</td>
+                <td>{{ ts.start_time_2|time:"H:i"|default:"--" }}</td>
+                <td>{{ ts.end_time_2|time:"H:i"|default:"--" }}</td>
+                <td><b>{{ ts.calculate_working_hours|hours_minutes }}</b></td>
+                <td>
+                    {% if ts.is_confirmed %}
+                        <span class="w3-tag w3-green w3-round">Validé</span>
+                    {% else %}
+                        <span class="w3-tag w3-amber w3-round">En attente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function triggerSync() {
+    const btn = document.getElementById('sync-btn');
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Connexion au terminal...";
+
+    const response = await fetch("/api/timesheets/sync-my-data", {
+        method: "POST",
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+    });
+    
+    const result = await response.json();
+    alert(result.message);
+    location.reload(); // Refresh to show new data
+}
+</script>
+{% endblock %}
