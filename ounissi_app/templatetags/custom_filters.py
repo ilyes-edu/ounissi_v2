@@ -5,27 +5,23 @@ register = template.Library()
 
 @register.filter(name='hours_minutes')
 def hours_minutes(value):
-    """
-    Converts a timedelta or integer minutes into a HH:MM string.
-    """
-    if not value:
+    if value is None or value == "":
         return "00:00"
 
-    # If it's a timedelta (which our new view sends)
+    # 1. Handle Timedelta (Manager view logic)
     if isinstance(value, timedelta):
         total_seconds = int(value.total_seconds())
-        # Handle negative timedeltas if they exist
-        abs_seconds = abs(total_seconds)
-        hours = abs_seconds // 3600
-        minutes = (abs_seconds % 3600) // 60
-        return f"{'-' if total_seconds < 0 else ''}{hours:02d}:{minutes:02d}"
+        h = total_seconds // 3600
+        m = (total_seconds % 3600) // 60
+        return f"{h:02d}:{m:02d}"
 
-    # Fallback if it's still receiving an integer (old logic)
+    # 2. Handle Numeric (Employee view: e.g., 6.0 hours)
     try:
-        total_minutes = int(value)
-        hours = total_minutes // 60
-        minutes = total_minutes % 60
-        return f"{hours:02d}:{minutes:02d}"
+        # We multiply by 60 to convert hours to minutes
+        total_minutes = int(float(value) * 60)
+        h = total_minutes // 60
+        m = total_minutes % 60
+        return f"{h:02d}:{m:02d}"
     except (ValueError, TypeError):
         return "00:00"
 

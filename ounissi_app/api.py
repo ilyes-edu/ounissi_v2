@@ -4,7 +4,6 @@ from typing import List, Optional
 from .models import Timesheet, UserSyncLog
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-from django.contrib.auth.decorators import login_required
 
 # Initialize API
 ninja_api = NinjaAPI()
@@ -51,18 +50,21 @@ def sync_my_data(request):
     user = request.user
     today = timezone.localtime().date()
 
-    # 1. Quota Check
     sync_record, _ = UserSyncLog.objects.get_or_create(user=user, date=today)
-
     if sync_record.count >= 3:
-        return {"status": "error", "message": "Quota quotidien atteint (3/3). Réessayez demain."}
+        return {"status": "error", "message": "Quota quotidien atteint (3/3)."}
 
-    # 2. Trigger the ZKTeco Sync (Assuming the function is import_from_zkteco)
     try:
-        from .utils import import_from_zkteco
-        import_from_zkteco()  # This updates the DB with the latest logs
+        # Import the logic from your new dedicated importer
+        from .attendance_importer import import_attendance_logs, timesheet_dataframe, save_logs
 
-        # 3. Increment the counter
+        raw_logs = import_attendance_logs()
+        if not raw_logs:
+            return {"status": "error", "message": "Impossible de lire les données du terminal."}
+
+        df = timesheet_dataframe(raw_logs)
+        save_logs(df)
+
         sync_record.count += 1
         sync_record.save()
 

@@ -3,18 +3,42 @@
 
 {% block content %}
 <div class="w3-container w3-margin-top">
-    <div class="w3-row">
-        <div class="w3-col l8">
-            <h3>Historique de mes Pointages</h3>
-        </div>
-        <div class="w3-col l4 w3-right-align">
-            <button id="sync-btn" onclick="triggerSync()" 
-                    class="w3-button w3-blue w3-round-large {% if remaining_syncs == 0 %}w3-disabled{% endif %}">
-                🔄 Sync Terminal ({{ remaining_syncs }} restants)
-            </button>
-        </div>
-    </div>
+    <div class="w3-row w3-card w3-padding w3-white w3-round">
+        <form method="get" action="" class="w3-container">
+            <div class="w3-row-padding">
+                <div class="w3-col l3 m6">
+                    <label class="w3-small">Mois</label>
+                    <select name="month" class="w3-select w3-border w3-round">
+                        {% for m_num, m_name in months %}
+                            <option value="{{ m_num }}" {% if selected_month == m_num %}selected{% endif %}>
+                                {{ m_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w3-col l3 m6">
+                    <label class="w3-small">Année</label>
+                    <select name="year" class="w3-select w3-border w3-round">
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>
+                                {{ y }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w3-col l2 m12 w3-margin-top">
+                    <button type="submit" class="w3-button w3-dark-grey w3-round w3-block">🔍 Filtrer</button>
+                </div>
 
+                <div class="w3-col l4 m12 w3-margin-top w3-right-align">
+                     <button type="button" id="sync-btn" onclick="triggerSync()"
+                            class="w3-button w3-blue w3-round {% if remaining_syncs == 0 %}w3-disabled{% endif %}">
+                        🔄 Sync Terminal ({{ remaining_syncs }} restants)
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
     <table class="w3-table-all w3-card w3-margin-top">
         <thead>
             <tr class="w3-light-grey">

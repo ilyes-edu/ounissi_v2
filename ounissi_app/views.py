@@ -1660,25 +1660,48 @@ def user_schedules_history(request, schedule_id=None):
 
 @login_required
 def my_timesheet(request):
-    # Fetch only this user's data
-    employee = request.user.employee  # Assuming a 1-to-1 link
+    employee = getattr(request.user, 'employee', None)
+    if not employee:
+        # Assuming you have an error or landing page for users without profiles
+        return render(request, 'error.html', {'message': "Profil employé non trouvé."})
 
-    # Default to current month
+    # 1. Get Month/Year from GET params or default to 'now'
     today = timezone.localtime().date()
+    try:
+        selected_month = int(request.GET.get('month', today.month))
+        selected_year = int(request.GET.get('year', today.year))
+    except (ValueError, TypeError):
+        selected_month, selected_year = today.month, today.year
+
+    # 2. Filter Timesheets for the local database
     timesheets = Timesheet.objects.filter(
         employee=employee,
-        date__month=today.month,
-        date__year=today.year
+        date__year=selected_year,
+        date__month=selected_month
     ).order_by('-date')
 
-    # Get remaining syncs for today
-    sync_record, created = UserSyncLog.objects.get_or_create(
-        user=request.user,
-        date=today
-    )
+    # 3. Generate lists for the dropdown menus
+    # Months 1-12 (French names if you prefer)
+    months = [
+        (1, 'Janvier'), (2, 'Février'), (3, 'Mars'), (4, 'Avril'),
+        (5, 'Mai'), (6, 'Juin'), (7, 'Juillet'), (8, 'Août'),
+        (9, 'Septembre'), (10, 'Octobre'), (11, 'Novembre'), (12, 'Décembre')
+    ]
+    # Last 3 years
+    years = range(today.year, today.year - 2, -1)
+
+    # 4. Quota check for today (remains current date specific)
+    sync_record, _ = UserSyncLog.objects.get_or_create(user=request.user, date=today)
     remaining_syncs = max(0, 3 - sync_record.count)
 
-    return render(request, 'portal/my_timesheet.html', {
+    context = {
         'timesheets': timesheets,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'months': months,
+        'years': years,
         'remaining_syncs': remaining_syncs,
-    })
+        'logged_data': getLoggedData(request) # Using your existing helper
+    }
+
+    return render(request, 'portal/my_timesheet.html', context)

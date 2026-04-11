@@ -21,10 +21,7 @@ def calculate_total_salary(salary, details):
 
 
 def get_actual_timesheet(employee):
-    """
-    Get the entrance time for today from the Timesheet model directly.
-    Querying the database is 1000x faster than pulling raw logs into Pandas on every page load.
-    """
+
     today_date = timezone.localtime().date()
 
     try:
@@ -43,10 +40,7 @@ def get_actual_timesheet(employee):
 
 
 def getLoggedData(request):
-    """
-    Optimized function to retrieve all necessary context data for the base template.
-    Reduces database hits by using select_related/prefetch_related where possible.
-    """
+
     loggedData = {
         'user': 'Not Connected',
         'group': None,
