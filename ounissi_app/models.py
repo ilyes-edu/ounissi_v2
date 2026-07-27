@@ -415,6 +415,95 @@ class ReceptionPlacement(models.Model):
     def __str__(self):
         return f"ReceptionPlacement_{self.supplier}#{self.ref_tiers}"
 
+#new reception logic
+class ReceptionProcess(models.Model):
+    """
+    The Master Record: Represents the 'Project' of a specific delivery.
+    This is the anchor for bulk management.
+    """
+    supplier = models.CharField(max_length=100, db_index=True)
+    ref_tiers = models.CharField(max_length=50, db_index=True)
+    reception_date = models.DateField(auto_now_add=True, db_index=True)
+
+    # Allows us to track which voluntary Reception triggered this process
+    origine = models.OneToOneField(
+        'Reception',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='v3_process'
+    )
+
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Workflow de Réception"
+        ordering = ['-reception_date']
+
+    def __str__(self):
+        return f"Process {self.supplier} - {self.ref_tiers}"
+
+
+class ReceptionTask(models.Model):
+    """
+    The Detail Record: Represents one of the 5 linear steps.
+    """
+    RECEP_STEPS = [
+        ('REC', 'Réception'),
+        ('SAI', 'Saisie'),
+        ('PRO', 'Produit'),
+        ('VIG', 'Vignette'),
+        ('PLA', 'Placement'),
+    ]
+
+    STATUS_CHOICES = [
+        ('PENDING', 'En attente'),
+        ('ASSIGNED', 'Assigné'),
+        ('IN_PROGRESS', 'En cours'),
+        ('DONE', 'Terminé'),
+    ]
+
+    process = models.ForeignKey(
+        ReceptionProcess,
+        on_delete=models.CASCADE,
+        related_name='tasks'
+    )
+
+    # Your suggested CharField with choices
+    task_step = models.CharField(
+        max_length=3,
+        choices=RECEP_STEPS,
+        db_index=True
+    )
+
+    # Flexible assignment: Multiple employees can now be assigned in bulk
+    employees = models.ManyToManyField(
+        Employee,
+        related_name='assigned_reception_tasks',
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+
+    # QMS / Audit trail
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+
+    # Meta-data for each step (e.g., number of lines for SAI)
+    # Using JSONField to avoid creating 5 separate tables
+    task_data = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        unique_together = ('process', 'task_step')
+        verbose_name = "Tâche de Réception"
+
+    def __str__(self):
+        return f"{self.process.ref_tiers} - {self.get_task_step_display()}"
 
 # Gestion des Stocks
 # Operations stock

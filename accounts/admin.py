@@ -35,6 +35,14 @@ class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ["email", "username", "view_user_details"]
 
+    # Use 'password1' and 'password2' instead of 'password'
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2'),
+        }),
+    )
+
     def view_user_details(self, obj):
         url = reverse('admin:accounts_customuser_change', args=[obj.id])
         return format_html('<a href="{}">View Details</a>', url)

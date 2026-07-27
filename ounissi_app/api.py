@@ -1,7 +1,8 @@
 from django.utils import timezone
 from ninja import NinjaAPI, Schema
 from typing import List, Optional
-from .models import Timesheet, UserSyncLog
+from accounts.models import Employee
+from .models import Timesheet, UserSyncLog, ReceptionTask, ScheduleItem, ReceptionProcess
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 
@@ -74,3 +75,57 @@ def sync_my_data(request):
         }
     except Exception as e:
         return {"status": "error", "message": f"Erreur terminal: {str(e)}"}
+
+class BulkAssignSchema(Schema):
+    """
+    Data contract for bulk assigning employees to reception steps.
+    """
+    process_ids: List[int]    # The IDs of the ReceptionProcess Master records
+    employee_ids: List[int]   # The IDs of the Employee records being assigned
+    task_step: str            # Must be one of: 'REC', 'SAI', 'PRO', 'VIG', 'PLA'
+
+
+@ninja_api.post("/reception/bulk-assign-task")
+def bulk_assign_task(request, data: BulkAssignSchema):
+    """
+    Manager Control Tower: Assigns a team to a specific task step
+    across multiple selected invoices.
+    """
+    # 1. Fetch the target entities
+    processes = ReceptionProcess.objects.filter(id__in=data.process_ids)
+    employees = Employee.objects.filter(id__in=data.employee_ids)
+
+    if not processes.exists():
+        return {"status": "error", "message": "Aucun processus sélectionné."}
+
+    with transaction.atomic():
+        for proc in processes:
+            # 2. Get or create the specific task for this process
+            # (Ensures placeholders exist even if auto-initialization missed one)
+            task, created = ReceptionTask.objects.get_or_create(
+                process=proc,
+                task_step=data.task_step
+            )
+
+            # 3. Assign the team (Clears previous and sets new)
+            task.employees.set(employees)
+            task.status = 'ASSIGNED'
+            task.save()
+
+            # 4. Push to ScheduleItems
+            # This makes the task appear on the employee's personal dashboard
+            for emp in employees:
+                ScheduleItem.objects.get_or_create(
+                    employee=emp,
+                    # We use the display name for the schedule entry
+                    task_name=f"{task.get_task_step_display()} : {proc.supplier}",
+                    date=timezone.now().date(),
+                    status="ASSIGNED",
+                    # Link to the process ID for easy lookup in the employee view
+                    related_id=proc.id
+                )
+
+    return {
+        "status": "success",
+        "message": f"Assignation réussie pour {processes.count()} factures."
+    }

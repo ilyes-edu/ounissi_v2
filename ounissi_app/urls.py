@@ -14,9 +14,7 @@ urlpatterns = [
     path('attendance-logs/', views.attendance_logs, name='attendance_logs'),
     path('attendance-logs/save-data/', views.save_data, name='save_data'),
     path('timesheets/', views.timesheet_list, name='timesheet_list'),
-    # path('timesheets/create/', views.timesheet_create, name='timesheet_form'),
     path('timesheets/update_timesheet/<int:pk>/', views.timesheet_update, name='update_timesheet'),
-    # path('timesheets/delete/<int:pk>/', views.timesheet_delete, name='timesheet_delete'),
     # Salary Item URLs
     path('salary_items/', views.salary_item_list, name='salary_item_list'),
     path('salary/add-update-salary/', views.add_update_salary, name='add_update_salary'),
@@ -46,7 +44,6 @@ urlpatterns = [
     path('schedule/plan', views.schedule_details2, name='schedule_details2'),
     path('schedule/plan/<int:schedule_id>/', views.schedule_details2, name='schedule_details_with_id'),
 
-    # path('schedule/select_schedule/', views.schedule_select_view, name='select_schedule'),
     path('schedule/schedule_items/<int:schedule_id>/', views.schedule_items_for_schedule, name='schedule_items'),
     path('schedule/add_or_edit_schedule_item', views.add_or_edit_schedule_item, name='add_or_edit_schedule_item'),
 
@@ -56,11 +53,8 @@ urlpatterns = [
     #Tasks URLs
     path('tasks/', views.tasks_list, name='task_list'),
     path('tasks/task_create/', views.create_task, name='create_task'),
-    # path('tasks/task_performance/', views.TaskPerformanceView.as_view(), name='task_performance'),
-    # path ('tasks/distribute_tasks/', views.distribute_tasks, name = 'distribute_tasks'),
     path('get_filtered_employees/', views.get_filtered_employees, name='get_filtered_employees'),
     path('get_model_form', views.get_model_form, name='get_model_form'),
-    # path('tasks/create_reception/', views.reception_view, name='create_reception'),
     path('submit_form/<str:form_class_name>/', views.generic_form_submission_view, name='generic_form_submission'),
 
     # Special Forms
@@ -70,10 +64,11 @@ urlpatterns = [
     path('form_reception_vignette', views.special_form_vignette, name='form_reception_vignette'),
     path('form_reception_placement', views.special_form_placement, name='form_reception_placement'),
 
+    # new reception urls
+    path('reception-v3/dashboard/', views.reception_dashboard_v3, name='reception_dashboard_v3'),
     #Queries URLs
     path('queries/', views.test_queries, name='test_queries'),
 
-    # path('queries/', views.queries_list, name='queries_list'),
     path('queries/create_query/', views.create_query, name='create_query'),
     path('queries/test_query_submission/', views.test_query_submission, name='test_query_submission'),
     path('queries/execute_query/', views.execute_query, name='execute_query'),

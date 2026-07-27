@@ -15,15 +15,15 @@ import pandas as pd
 from .models import *
 from .forms import *
 from accounts.models import Employee, Team
-from .attendance_importer import import_attendance_logs, timesheet_dataframe, save_logs
+from .attendance_importer import import_attendance_logs, timesheet_dataframe, save_logs, import_attendance_and_users
 from .xpertcon import XpertConnect
 from .salary_calculator import SalaryCalculator
-from .utils import getLoggedData
+from .utils import getLoggedData, generate_timesheet_excel
 from .decorators import with_logged_data
 
 # Import the new service layer
 from . import schedule_service
-
+# additional
 
 @login_required
 def timesheet_list(request):
@@ -34,8 +34,8 @@ def timesheet_list(request):
     start_date = today.replace(day=1)
     end_date = today
 
-    timesheets = Timesheet.objects.select_related('employee').all()
     specific_xp_id = '%%'
+    f_employees = None
 
     if filter_form.is_valid():
         f_start = filter_form.cleaned_data.get('start_date')
@@ -45,23 +45,37 @@ def timesheet_list(request):
         if f_start: start_date = f_start
         if f_end: end_date = f_end
 
-        timesheets = timesheets.filter(date__gte=start_date, date__lte=end_date)
+    # Determine date range
+    delta = end_date - start_date
+    date_list = [start_date + timedelta(days=i) for i in range(delta.days + 1)]
 
-        if f_employees:
-            if isinstance(f_employees, Employee):
-                f_employees = [f_employees]
-                specific_xp_id = f_employees[0].xp_id or '%%'
-            elif hasattr(f_employees, 'count') and f_employees.count() == 1:
-                specific_xp_id = f_employees.first().xp_id or '%%'
-            timesheets = timesheets.filter(employee__in=f_employees)
+    # Determine employee list
+    if f_employees:
+        if isinstance(f_employees, Employee):
+            employees_list = [f_employees]
+            specific_xp_id = f_employees.xp_id or '%%'
+        elif hasattr(f_employees, 'all'):
+            employees_list = list(f_employees.all())
+            if len(employees_list) == 1:
+                specific_xp_id = employees_list[0].xp_id or '%%'
+        else:
+            employees_list = list(f_employees)
     else:
-        timesheets = timesheets.filter(date__gte=start_date)
+        # Fallback: Fetch all active employees (or simply all employees)
+        employees_list = list(Employee.objects.all())
 
-    timesheets = timesheets.order_by('employee', 'date')
+    # Fetch existing timesheet records and index them
+    db_timesheets = Timesheet.objects.filter(
+        date__gte=start_date,
+        date__lte=end_date,
+        employee__in=employees_list
+    ).select_related('employee')
+
+    timesheet_map = {(ts.employee_id, ts.date): ts for ts in db_timesheets}
 
     # 2. XpertPharm Audit Fetch
     xpert_logs_map = {}
-    if timesheets.exists():
+    if employees_list:
         query_str = """
                     SELECT CAST(CREATED_ON AS DATE)         AS OP_DATE,
                            CREATED_BY                       AS OP_USER,
@@ -90,64 +104,77 @@ def timesheet_list(request):
         except Exception as e:
             print(f"XpertPharm Log Fetch Failed: {e}")
 
-    # 3. Data Assembly
+    # 3. Data Assembly (Grid: Employees × Dates)
     timesheets_with_hours = []
-    for ts in timesheets:
-        raw_hours = ts.calculate_working_hours() or 0
-        bio_hours = timedelta(hours=float(raw_hours))
-        log = xpert_logs_map.get((str(ts.employee.xp_id), str(ts.date)), {'first': '--', 'last': '--'})
 
-        xp_total_str = "--"
-        warning = False
+    for emp in employees_list:
+        for current_date in date_list:
+            # Find existing record or use an unsaved fallback instance
+            ts = timesheet_map.get((emp.id, current_date))
+            is_new_row = False
 
-        if log['first'] != '--' and log['last'] != '--':
-            try:
-                # We use 'time' (the type we just imported) for the check
-                t1_val = log['first']
-                t2_val = log['last']
+            if not ts:
+                ts = Timesheet(employee=emp, date=current_date)
+                is_new_row = True
 
-                # Convert to time objects if they aren't already
-                t1_obj = t1_val if isinstance(t1_val, time) else datetime.strptime(str(t1_val), '%H:%M:%S').time()
-                t2_obj = t2_val if isinstance(t2_val, time) else datetime.strptime(str(t2_val), '%H:%M:%S').time()
+            raw_hours = 0 if is_new_row else (ts.calculate_working_hours() or 0)
+            bio_hours = timedelta(hours=float(raw_hours))
 
-                # Combine with a dummy date to allow subtraction
-                today = datetime.today()
-                dt1 = datetime.combine(today, t1_obj)
-                dt2 = datetime.combine(today, t2_obj)
+            log = xpert_logs_map.get((str(emp.xp_id), str(current_date)), {'first': '--', 'last': '--'})
 
-                xp_delta = dt2 - dt1
-                total_seconds = int(xp_delta.total_seconds())
+            xp_total_str = "--"
+            warning = False
 
-                if total_seconds > 0:
-                    h, remainder = divmod(total_seconds, 3600)
-                    m, _ = divmod(remainder, 60)
-                    xp_total_str = f"{h:02d}:{m:02d}"
+            if log['first'] != '--' and log['last'] != '--':
+                try:
+                    t1_val = log['first']
+                    t2_val = log['last']
 
-                # --- WARNING LOGIC ---
-                if xp_delta > (bio_hours + timedelta(minutes=5)):
+                    t1_obj = t1_val if isinstance(t1_val, time) else datetime.strptime(str(t1_val), '%H:%M:%S').time()
+                    t2_obj = t2_val if isinstance(t2_val, time) else datetime.strptime(str(t2_val), '%H:%M:%S').time()
+
+                    dummy_today = datetime.today()
+                    dt1 = datetime.combine(dummy_today, t1_obj)
+                    dt2 = datetime.combine(dummy_today, t2_obj)
+
+                    xp_delta = dt2 - dt1
+                    total_seconds = int(xp_delta.total_seconds())
+
+                    if total_seconds > 0:
+                        h, remainder = divmod(total_seconds, 3600)
+                        m, _ = divmod(remainder, 60)
+                        xp_total_str = f"{h:02d}:{m:02d}"
+
+                    # Warning Logic
+                    if xp_delta > (bio_hours + timedelta(minutes=5)):
+                        warning = True
+                    elif bio_hours.total_seconds() == 0 and total_seconds > 300:
+                        warning = True
+
+                except Exception as e:
+                    print(f"DEBUG Error for {emp}: {e}")
+
+            # Missing Logout Check (skip if row is completely empty/unsaved)
+            if not is_new_row:
+                if (ts.start_time and not ts.end_time) or \
+                        (ts.start_time_2 and not ts.end_time_2) or \
+                        (ts.start_time_3 and not ts.end_time_3):
                     warning = True
-                elif bio_hours.total_seconds() == 0 and total_seconds > 300:
-                    warning = True
 
-            except Exception as e:
-                print(f"DEBUG Error for {ts.employee}: {e}")
+            timesheets_with_hours.append({
+                'obj': ts,
+                'hours': bio_hours,
+                'xp_first': log['first'],
+                'xp_last': log['last'],
+                'xp_total': xp_total_str,
+                'warning': warning,
+                'is_new_row': is_new_row
+            })
+    # 4. Trigger isolated export if requested
+    if request.GET.get('export') == 'excel':
+        return generate_timesheet_excel(timesheets_with_hours, start_date, end_date)
 
-        # Missing Logout Check
-        if (ts.start_time and not ts.end_time) or \
-                (ts.start_time_2 and not ts.end_time_2) or \
-                (ts.start_time_3 and not ts.end_time_3):
-            warning = True
-
-        timesheets_with_hours.append({
-            'obj': ts,
-            'hours': bio_hours,
-            'xp_first': log['first'],
-            'xp_last': log['last'],
-            'xp_total': xp_total_str,
-            'warning': warning
-        })
-
-    # 4. Define the context before returning
+    # 5. Define the context before returning
     context = {
         'filter_form': filter_form,
         'timesheets_with_hours': timesheets_with_hours,
@@ -213,52 +240,70 @@ def attendance_logs(request):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         zk_id = request.GET.get('employee')
+
         all_logs = []
+        terminal_user_map = {}
 
         # Calculate the 1st day of the current month
         today = timezone.localtime().date()
         first_day_current_month = today.replace(day=1)
 
+        # Assuming helper function parse_date is imported or declared
         parsed_start_date = parse_date(start_date) if start_date else first_day_current_month
         parsed_end_date = parse_date(end_date) if end_date else today
 
         terminals = Terminal.objects.all()
 
         for terminal in terminals:
-            # Collect logs from ALL terminals instead of overwriting
-            device_logs = import_attendance_logs(device=terminal.ip_address)
+            # CHANGE THIS LINE to use import_attendance_and_users:
+            device_logs, device_users = import_attendance_and_users(device=terminal.ip_address)
+
             if device_logs:
                 all_logs.extend(device_logs)
+
+            if device_users:
+                for user in device_users:
+                    # Clean trailing null characters from device names
+                    cleaned_name = user.name.strip('\x00').strip() if user.name else ""
+                    if cleaned_name:
+                        terminal_user_map[str(user.user_id)] = cleaned_name
 
         logs = all_logs
 
         if zk_id:
-            filtered_logs = [log for log in logs if
-                             parsed_start_date <= log.timestamp.date() <= parsed_end_date and str(log.user_id) == str(
-                                 zk_id)]
+            filtered_logs = [
+                log for log in logs
+                if parsed_start_date <= log.timestamp.date() <= parsed_end_date
+                   and str(log.user_id) == str(zk_id)
+            ]
         else:
-            filtered_logs = [log for log in logs if parsed_start_date <= log.timestamp.date() <= parsed_end_date]
+            filtered_logs = [
+                log for log in logs
+                if parsed_start_date <= log.timestamp.date() <= parsed_end_date
+            ]
 
         employees = Employee.objects.all()
         connection_status = True if logs else False
 
         if connection_status:
-            attendance_df = timesheet_dataframe(filtered_logs)
+            # Pass our terminal name dictionary mapping to the dataframe handler
+            attendance_df = timesheet_dataframe(filtered_logs, terminal_user_map=terminal_user_map)
             jsondata = attendance_df.reset_index().to_json(orient='records')
             data = json.loads(jsondata)
         else:
             data = []
 
-        context = {'data': data,
-                   'employees': employees,
-                   'connection_status': connection_status,
-                   'start_date': start_date,
-                   'end_date': end_date,
-                   'terminals': terminals,
-                   'selected_employee': zk_id,
-                   'logged_data': getLoggedData(request)}
+        context = {
+            'data': data,
+            'employees': employees,
+            'connection_status': connection_status,
+            'start_date': start_date,
+            'end_date': end_date,
+            'terminals': terminals,
+            'selected_employee': zk_id,
+            'logged_data': getLoggedData(request) if 'getLoggedData' in globals() else None
+        }
         return render(request, 'timesheet/attendance_logs.html', context)
-
 
 @login_required
 def save_data(request):
@@ -1705,3 +1750,18 @@ def my_timesheet(request):
     }
 
     return render(request, 'portal/my_timesheet.html', context)
+
+# new reception logc
+@login_required
+def reception_dashboard_v3(request):
+    # Fetch all processes and their associated 5 tasks in one go
+    processes = ReceptionProcess.objects.all().prefetch_related('tasks', 'tasks__employees').order_by('-reception_date')
+
+    employees = Employee.objects.filter(is_active=True)
+
+    context = {
+        'processes': processes,
+        'employees': employees,
+        'steps': ReceptionTask.RECEP_STEPS,  # Pass choices for the UI
+    }
+    return render(request, 'reception/dashboard_v3.html', context)

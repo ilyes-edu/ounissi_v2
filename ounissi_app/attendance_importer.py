@@ -7,7 +7,10 @@ from django.conf import settings
 
 
 def import_attendance_logs(device=None, port=4370, timeout=50):
-    # Use settings if available, otherwise default to your provided IP
+    """
+    Connects to the ZK device and fetches ONLY attendance records.
+    Maintains compatibility with views that only process logs (e.g., save-data view).
+    """
     ip = device or getattr(settings, 'ZK_DEVICE_IP', '192.168.1.184')
     zk = ZK(ip, port=port, timeout=timeout)
     conn = None
@@ -15,23 +18,61 @@ def import_attendance_logs(device=None, port=4370, timeout=50):
         conn = zk.connect()
         return conn.get_attendance()
     except Exception as e:
-        print(f"Connection Error: {e}")
+        print(f"Connection Error with device {ip}: {e}")
         return []
     finally:
-        if conn: conn.disconnect()
+        if conn:
+            conn.disconnect()
 
 
-def timesheet_dataframe(attendance_logs):
-    if not attendance_logs: return pd.DataFrame()
+def import_attendance_and_users(device=None, port=4370, timeout=50):
+    """
+    Connects to the ZK device and fetches both attendance records and
+    registered user details in a single connection session.
+    """
+    ip = device or getattr(settings, 'ZK_DEVICE_IP', '192.168.1.184')
+    zk = ZK(ip, port=port, timeout=timeout)
+    conn = None
+    logs = []
+    users = []
+    try:
+        conn = zk.connect()
+        logs = conn.get_attendance()
+        try:
+            users = conn.get_users()
+        except Exception as e:
+            print(f"Error fetching user details from device {ip}: {e}")
+    except Exception as e:
+        print(f"Connection Error with device {ip}: {e}")
+    finally:
+        if conn:
+            conn.disconnect()
+    return logs, users
 
+
+def timesheet_dataframe(attendance_logs, terminal_user_map=None):
+    if not attendance_logs:
+        return pd.DataFrame()
+
+    if terminal_user_map is None:
+        terminal_user_map = {}
+
+    # Map database employees
     employees = Employee.objects.all().only('zk_id', 'first_name', 'last_name')
     employee_map = {str(e.zk_id): f"{e.first_name} {e.last_name}" for e in employees}
 
-    data = [{
-        'user_id': str(log.user_id),
-        'employee_name': employee_map.get(str(log.user_id), "inexistant"),
-        'timestamp': log.timestamp,
-    } for log in attendance_logs]
+    data = []
+    for log in attendance_logs:
+        u_id = str(log.user_id)
+
+        # Priority: 1. Local Database, 2. Biometric Terminal Name, 3. Fallback
+        emp_name = employee_map.get(u_id) or terminal_user_map.get(u_id) or "inexistant"
+
+        data.append({
+            'user_id': u_id,
+            'employee_name': emp_name,
+            'timestamp': log.timestamp,
+        })
 
     df = pd.DataFrame(data)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -97,7 +138,6 @@ def save_logs(result_df):
         else:
             new_timesheets.append(Timesheet(employee=employee, date=date, **data))
 
-    # CRITICAL: Bulk operations MUST be outside the loop
     with transaction.atomic():
         if new_timesheets:
             Timesheet.objects.bulk_create(new_timesheets)
