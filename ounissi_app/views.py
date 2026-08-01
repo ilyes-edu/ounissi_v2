@@ -25,6 +25,7 @@ from .decorators import with_logged_data
 from . import schedule_service
 # additional
 
+
 @login_required
 def timesheet_list(request):
     filter_form = TimesheetFilterForm(request.GET)
@@ -83,10 +84,8 @@ def timesheet_list(request):
                            CAST(MAX(CREATED_ON) AS TIME(0)) AS LAST_LOG
                     FROM SYS_OBJET_TRACE WITH (NOLOCK)
                     WHERE CREATED_ON >= :start_date
-                      AND CREATED_ON \
-                        < :end_date
-                      AND (:xp_id = '%%' \
-                       OR CREATED_BY = :xp_id)
+                      AND CREATED_ON < :end_date
+                      AND (:xp_id = '%%' OR CREATED_BY = :xp_id)
                     GROUP BY CREATED_BY, CAST (CREATED_ON AS DATE)
                     OPTION (RECOMPILE);
                     """
@@ -116,6 +115,21 @@ def timesheet_list(request):
             if not ts:
                 ts = Timesheet(employee=emp, date=current_date)
                 is_new_row = True
+
+            # --- OPTIMIZATION: IMMEDIATE LEAVE BYPASS ---
+            # If the record is saved and has an active leave type, we skip all heavy logic
+            if not is_new_row and ts.leave_type != Timesheet.LeaveType.NONE:
+                timesheets_with_hours.append({
+                    'obj': ts,
+                    'hours': timedelta(0),       # Leaves default to 0 biometric working hours
+                    'xp_first': '--',
+                    'xp_last': '--',
+                    'xp_total': '--',
+                    'warning': False,            # No warnings triggered for approved or pending leaves
+                    'is_new_row': False
+                })
+                continue  # Jump directly to the next day
+            # ---------------------------------------------
 
             raw_hours = 0 if is_new_row else (ts.calculate_working_hours() or 0)
             bio_hours = timedelta(hours=float(raw_hours))
@@ -170,6 +184,7 @@ def timesheet_list(request):
                 'warning': warning,
                 'is_new_row': is_new_row
             })
+
     # 4. Trigger isolated export if requested
     if request.GET.get('export') == 'excel':
         return generate_timesheet_excel(timesheets_with_hours, start_date, end_date)

@@ -11,29 +11,47 @@ User = get_user_model()
 
 
 class Timesheet(models.Model):
+    # Encapsulated choices using TextChoices
+    class LeaveType(models.TextChoices):
+        NONE = 'NONE', 'Aucun'
+        PAID = 'PAID', 'Congé Payé'
+        SICK = 'SICK', 'Congé Maladie'
+        UNPAID = 'UNPAID', 'Congé Sans Solde'
+        OTHER = 'OTHER', 'Autre'
+
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, default=-1)
     date = models.DateField()
-    start_time = models.TimeField(default=None, blank=True)
+
+    start_time = models.TimeField(default=None, null=True, blank=True)
     end_time = models.TimeField(default=None, null=True, blank=True)
     start_time_2 = models.TimeField(default=None, null=True, blank=True)
     end_time_2 = models.TimeField(default=None, null=True, blank=True)
     start_time_3 = models.TimeField(default=None, null=True, blank=True)
     end_time_3 = models.TimeField(default=None, null=True, blank=True)
+
     is_confirmed = models.BooleanField(default=False)
-    # Any additional fields
+
+    # Referenced using LeaveType.choices and defaulting to LeaveType.NONE
+    leave_type = models.CharField(
+        max_length=10,
+        choices=LeaveType.choices,
+        default=LeaveType.NONE,
+        verbose_name="Type de Congé"
+    )
 
     def calculate_working_hours(self):
+        # Referenced using self.LeaveType.NONE
+        if self.leave_type != self.LeaveType.NONE:
+            return 0.0
+
         delta = timedelta()
         if self.start_time and self.end_time:
-            # Calculate the time delta between start_time and end_time
             delta = datetime.combine(datetime.min, self.end_time) - datetime.combine(datetime.min, self.start_time)
 
             if self.start_time_2 and self.end_time_2:
-                # Calculate the time delta between start_time and end_time
                 delta = delta + (datetime.combine(datetime.min, self.end_time_2)
                                  - datetime.combine(datetime.min, self.start_time_2))
                 if self.start_time_3 and self.end_time_3:
-                    # Calculate the time delta between start_time and end_time
                     delta = delta + (datetime.combine(datetime.min, self.end_time_3)
                                      - datetime.combine(datetime.min, self.start_time_3))
         hours = delta.total_seconds() / 3600
@@ -43,9 +61,12 @@ class Timesheet(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['employee', 'date'], name='unique_employee_date')
         ]
-    def __str__(self):
-        return f"Timesheet for {self.employee} on {self.date}"
 
+    def __str__(self):
+        if self.leave_type != self.LeaveType.NONE:
+            status = "Confirmé" if self.is_confirmed else "En attente"
+            return f"Congé ({self.get_leave_type_display()}) pour {self.employee} le {self.date} [{status}]"
+        return f"Timesheet for {self.employee} on {self.date}"
 
 # Salary part
 class CalculationType(models.TextChoices):

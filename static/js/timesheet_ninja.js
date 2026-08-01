@@ -4,22 +4,37 @@
  * Requires global variables NINJA_API_URL and CSRF_TOKEN to be defined in the template.
  */
 
-// 1. Helper to extract data from a specific table row
-function getRowData(rowId) {
-    const row = document.getElementById(`row-${rowId}`);
-    if (!row) {
-        console.error(`Row with ID row-${rowId} not found.`);
-        return null;
+// 1. Helper to extract data from both new and existing table rows
+function extractRowData(row) {
+    if (!row) return null;
+
+    const leaveTypeEl = row.querySelector('.leave_type');
+    const rowIdAttr = row.id; // e.g., "row-123" or "row-new-12-2026-07-25"
+
+    let id = null;
+    let employeeId = null;
+    let dateStr = null;
+
+    // Detect if this is an unsaved row
+    if (rowIdAttr.startsWith("row-new-")) {
+        const parts = rowIdAttr.split('-');
+        employeeId = parseInt(parts[2]);
+        dateStr = `${parts[3]}-${parts[4]}-${parts[5]}`; // Reassemble YYYY-MM-DD
+    } else {
+        id = parseInt(rowIdAttr.split('-')[1]);
     }
 
     return {
-        id: parseInt(rowId),
+        id: id,
+        employee_id: employeeId,
+        date: dateStr,
         start_time: row.querySelector('.start_time').value || null,
         end_time: row.querySelector('.end_time').value || null,
         start_time_2: row.querySelector('.start_time_2').value || null,
         end_time_2: row.querySelector('.end_time_2').value || null,
         start_time_3: row.querySelector('.start_time_3').value || null,
         end_time_3: row.querySelector('.end_time_3').value || null,
+        leave_type: leaveTypeEl ? leaveTypeEl.value : 'NONE',
     };
 }
 
@@ -48,6 +63,7 @@ async function postToNinja(payload, rowElements) {
                 row.style.backgroundColor = "#e8f5e9"; // Soft Success Green
                 row.classList.remove('w3-pale-red'); // Remove warning color if present
 
+                // Check for standard or new save buttons inside the row
                 const btn = row.querySelector('button[id^="btn-"]');
                 if (btn) btn.innerHTML = "✅";
             });
@@ -64,23 +80,40 @@ async function postToNinja(payload, rowElements) {
     }
 }
 
-// 3. Single Line Validation
+// 3. Existing Row Single Line Validation
 async function saveSingleLine(id) {
     console.log(`Saving single line: ${id}`);
     const row = document.getElementById(`row-${id}`);
     const btn = document.getElementById(`btn-${id}`);
+    if (!row || !btn) return;
 
     const originalBtnIcon = btn.innerHTML;
     btn.innerHTML = "⏳";
 
-    const data = getRowData(id);
+    const data = extractRowData(row);
     if (!data) return;
 
     const success = await postToNinja([data], [row]);
     if (!success) btn.innerHTML = originalBtnIcon;
 }
 
-// 4. Bulk Validation for the entire visible list
+// 3.1 New Row Single Line Validation
+async function saveNewSingleLine(btnElement, employeeId, dateStr) {
+    console.log(`Creating single line for Employee: ${employeeId}, Date: ${dateStr}`);
+    const row = btnElement.closest('tr');
+    if (!row) return;
+
+    const originalBtnIcon = btnElement.innerHTML;
+    btnElement.innerHTML = "⏳";
+
+    const data = extractRowData(row);
+    if (!data) return;
+
+    const success = await postToNinja([data], [row]);
+    if (!success) btnElement.innerHTML = originalBtnIcon;
+}
+
+// 4. Bulk Validation for the entire visible list (Supports both new and existing rows)
 async function executeBulkValidation() {
     const bulkBtn = document.getElementById('bulk-btn');
     const tableRows = document.querySelectorAll('tr[id^="row-"]');
@@ -88,7 +121,6 @@ async function executeBulkValidation() {
 
     if (tableRows.length === 0) return;
 
-    // Smart Warning Message
     let confirmMessage = `Confirmer la validation de ${tableRows.length} lignes ?`;
 
     if (warningRows.length > 0) {
@@ -105,8 +137,7 @@ async function executeBulkValidation() {
     bulkBtn.disabled = true;
 
     tableRows.forEach(row => {
-        const id = row.id.split('-')[1];
-        const data = getRowData(id);
+        const data = extractRowData(row);
         if (data) {
             payload.push(data);
             rowsArray.push(row);
@@ -117,7 +148,7 @@ async function executeBulkValidation() {
 
     if (success) {
         bulkBtn.innerHTML = "✅ Liste Validée";
-        bulkBtn.className = "w3-button w3-light-grey w3-round-large"; // Change style to show it's done
+        bulkBtn.className = "w3-button w3-light-grey w3-round-large";
     } else {
         bulkBtn.innerHTML = originalBtnText;
         bulkBtn.disabled = false;

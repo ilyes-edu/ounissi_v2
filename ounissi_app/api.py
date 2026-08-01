@@ -5,32 +5,47 @@ from accounts.models import Employee
 from .models import Timesheet, UserSyncLog, ReceptionTask, ScheduleItem, ReceptionProcess
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from datetime import datetime
 
 # Initialize API
 ninja_api = NinjaAPI()
 
-# 1. Define what a single row update looks like
+
+# 1. Updated Schema to support both ID updates and Employee/Date creation
 class TimesheetRowSchema(Schema):
-    id: int
+    id: Optional[int] = None  # Optional now
+    employee_id: Optional[int] = None  # Required for creation
+    date: Optional[str] = None  # Required for creation (Format: YYYY-MM-DD)
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     start_time_2: Optional[str] = None
     end_time_2: Optional[str] = None
     start_time_3: Optional[str] = None
     end_time_3: Optional[str] = None
+    leave_type: Optional[str] = 'NONE'
 
 
-# 2. The Bulk Update Endpoint
+# 2. Unified Bulk Update/Create Endpoint
 @ninja_api.post("/timesheets/bulk-validate")
 def bulk_update_timesheets(request, data: List[TimesheetRowSchema]):
     updated_count = 0
 
     with transaction.atomic():
         for entry in data:
-            # Fetch the record
-            ts = get_object_or_404(Timesheet, id=entry.id)
+            if entry.id:
+                # Update existing record
+                ts = get_object_or_404(Timesheet, id=entry.id)
+            elif entry.employee_id and entry.date:
+                # Create a new record on-the-fly
+                parsed_date = datetime.strptime(entry.date, "%Y-%m-%d").date()
+                ts, created = Timesheet.objects.get_or_create(
+                    employee_id=entry.employee_id,
+                    date=parsed_date
+                )
+            else:
+                continue
 
-            # Update fields (empty strings from JS inputs become None)
+            # Update fields
             ts.start_time = entry.start_time or None
             ts.end_time = entry.end_time or None
             ts.start_time_2 = entry.start_time_2 or None
@@ -38,13 +53,15 @@ def bulk_update_timesheets(request, data: List[TimesheetRowSchema]):
             ts.start_time_3 = entry.start_time_3 or None
             ts.end_time_3 = entry.end_time_3 or None
 
-            # Business Logic: Auto-confirm upon validation
+            if entry.leave_type:
+                ts.leave_type = entry.leave_type
+
+            # Confirm and validate
             ts.is_confirmed = True
             ts.save()
             updated_count += 1
 
-    return {"status": "success", "message": f"Validated {updated_count} lines successfully."}
-
+    return {"status": "success", "message": f"Processed {updated_count} lines successfully."}
 
 @ninja_api.post("/timesheets/sync-my-data")
 def sync_my_data(request):

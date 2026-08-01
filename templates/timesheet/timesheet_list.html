@@ -7,25 +7,7 @@
 {% block content %}
 <h2>Liste Pointage</h2>
 
-{#<form method="get" action="">#}
-{#    <div class="form-row">#}
-{#        <div class="form-group col-md-4">#}
-{#            {{ filter_form.start_date.label_tag }}#}
-{#            {{ filter_form.start_date }}#}
-{#        </div>#}
-{#        <div class="form-group col-md-4">#}
-{#            {{ filter_form.end_date.label_tag }}#}
-{#            {{ filter_form.end_date }}#}
-{#        </div>#}
-{#        <div class="form-group col-md-4">#}
-{#            <label>Employees:</label>#}
-{#            {{ filter_form.employees }}#}
-{#        </div>#}
-{#    </div>#}
-{#    <button type="submit" class="w3-button w3-blue w3-round w3-margin-top">#}
-{#    Filtrer#}
-{#</button>#}
-{#</form>#}
+
 <form method="get" action="">
     <div class="form-row">
         <div class="form-group col-md-4">
@@ -73,6 +55,8 @@
                 <th colspan="2" class="w3-center w3-border-left">Session 3</th>
                 <th class="w3-border-left">Bio Total</th>
                 <th colspan="2" class="w3-center w3-pale-blue w3-border-left">Audit Xpert</th>
+                <!-- Added Congé Header -->
+                <th class="w3-border-left">Congé</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -83,8 +67,8 @@
                     class="{% if item.warning %}w3-pale-red{% endif %}">
             {% else %}
                 <tr id="row-{{ item.obj.id }}"
-                    class="{% if item.obj.is_confirmed %}w3-pale-green{% elif item.warning %}w3-pale-red{% endif %}"
-                    title="{% if item.obj.is_confirmed %}Déjà validé - Toujours modifiable{% endif %}">
+                    class="{% if item.obj.is_confirmed and item.obj.leave_type != 'NONE' %}w3-pale-yellow{% elif item.obj.is_confirmed %}w3-pale-green{% elif item.warning %}w3-pale-red{% endif %}"
+                    title="{% if item.obj.is_confirmed %}Déjà validé{% endif %}">
             {% endif %}
 
                 <td>
@@ -119,9 +103,19 @@
                     </b>
                 </td>
 
+                <!-- Added leave_type Dropdown Cell -->
+                <td class="w3-border-left">
+                    <select class="leave_type w3-select w3-border w3-round w3-tiny" style="padding: 2px; width: 100%;">
+                        <option value="NONE" {% if item.obj.leave_type == 'NONE' %}selected{% endif %}>Aucun</option>
+                        <option value="PAID" {% if item.obj.leave_type == 'PAID' %}selected{% endif %}>Congé Payé</option>
+                        <option value="SICK" {% if item.obj.leave_type == 'SICK' %}selected{% endif %}>Congé Maladie</option>
+                        <option value="UNPAID" {% if item.obj.leave_type == 'UNPAID' %}selected{% endif %}>Congé Sans Solde</option>
+                        <option value="OTHER" {% if item.obj.leave_type == 'OTHER' %}selected{% endif %}>Autre</option>
+                    </select>
+                </td>
+
                 <td>
                     {% if item.is_new_row %}
-                        <!-- Call a modified function or pass extra params to create a record -->
                         <button onclick="saveNewSingleLine(this, {{ item.obj.employee.id }}, '{{ item.obj.date|date:'Y-m-d' }}')"
                                 class="w3-button w3-tiny w3-orange w3-round"
                                 id="btn-new-{{ item.obj.employee.id }}-{{ item.obj.date|date:'Y-m-d' }}">💾</button>
