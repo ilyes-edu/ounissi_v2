@@ -372,3 +372,27 @@ class TerminalForm(forms.ModelForm):
     class Meta:
         model = Terminal
         fields = ('terminal_id', 'ip_address')
+
+class LeaveRequestForm(forms.Form):
+    start_date = forms.DateField(
+        label="Date de début",
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'w3-input w3-border w3-round'})
+    )
+    end_date = forms.DateField(
+        label="Date de fin",
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'w3-input w3-border w3-round'})
+    )
+    leave_type = forms.ChoiceField(
+        label="Type de congé",
+        choices=[(c.value, c.label) for c in Timesheet.LeaveType if c != Timesheet.LeaveType.NONE],
+        widget=forms.Select(attrs={'class': 'w3-select w3-border w3-round'})
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+
+        if start and end and start > end:
+            raise forms.ValidationError("La date de début doit être antérieure ou égale à la date de fin.")
+        return cleaned_data

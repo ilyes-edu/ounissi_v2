@@ -1,10 +1,11 @@
 import json
-# import time
+import calendar
 from datetime import datetime, timedelta, time
 from django.apps import apps
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.module_loading import import_string
@@ -1720,51 +1721,99 @@ def user_schedules_history(request, schedule_id=None):
 
 @login_required
 def my_timesheet(request):
-    employee = getattr(request.user, 'employee', None)
-    if not employee:
-        # Assuming you have an error or landing page for users without profiles
-        return render(request, 'error.html', {'message': "Profil employé non trouvé."})
-
-    # 1. Get Month/Year from GET params or default to 'now'
-    today = timezone.localtime().date()
     try:
-        selected_month = int(request.GET.get('month', today.month))
-        selected_year = int(request.GET.get('year', today.year))
-    except (ValueError, TypeError):
-        selected_month, selected_year = today.month, today.year
+        employee = Employee.objects.get(user=request.user)
+    except Employee.DoesNotExist:
+        messages.error(request, "Aucun profil d'employé n'est associé à ce compte.")
+        return redirect('home')
 
-    # 2. Filter Timesheets for the local database
+    # Date Filtering Logic
+    today = timezone.localtime().date()
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+
+    try:
+        selected_month = int(selected_month)
+        selected_year = int(selected_year)
+    except (TypeError, ValueError):
+        selected_month = today.month
+        selected_year = today.year
+
+    start_date = date(selected_year, selected_month, 1)
+    _, last_day = calendar.monthrange(selected_year, selected_month)
+    end_date = date(selected_year, selected_month, last_day)
+
+    # Query filtered timesheets
     timesheets = Timesheet.objects.filter(
         employee=employee,
-        date__year=selected_year,
-        date__month=selected_month
+        date__gte=start_date,
+        date__lte=end_date
     ).order_by('-date')
 
-    # 3. Generate lists for the dropdown menus
-    # Months 1-12 (French names if you prefer)
     months = [
         (1, 'Janvier'), (2, 'Février'), (3, 'Mars'), (4, 'Avril'),
         (5, 'Mai'), (6, 'Juin'), (7, 'Juillet'), (8, 'Août'),
         (9, 'Septembre'), (10, 'Octobre'), (11, 'Novembre'), (12, 'Décembre')
     ]
-    # Last 3 years
-    years = range(today.year, today.year - 2, -1)
-
-    # 4. Quota check for today (remains current date specific)
-    sync_record, _ = UserSyncLog.objects.get_or_create(user=request.user, date=today)
-    remaining_syncs = max(0, 3 - sync_record.count)
+    years = list(range(today.year - 5, today.year + 2))
 
     context = {
+        'employee': employee,
         'timesheets': timesheets,
-        'selected_month': selected_month,
-        'selected_year': selected_year,
         'months': months,
         'years': years,
-        'remaining_syncs': remaining_syncs,
-        'logged_data': getLoggedData(request) # Using your existing helper
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'remaining_syncs': 3,
+        'logged_data': getLoggedData(request) if 'getLoggedData' in globals() else None
     }
-
     return render(request, 'portal/my_timesheet.html', context)
+
+
+@login_required
+def request_leave(request):
+    try:
+        employee = Employee.objects.get(user=request.user)
+    except Employee.DoesNotExist:
+        messages.error(request, "Aucun profil d'employé n'est associé à ce compte.")
+        return redirect('home')
+
+    form = LeaveRequestForm()
+    if request.method == 'POST':
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            start = form.cleaned_data['start_date']
+            end = form.cleaned_data['end_date']
+            leave_type = form.cleaned_data['leave_type']
+
+            delta = end - start
+            with transaction.atomic():
+                for i in range(delta.days + 1):
+                    current_date = start + timedelta(days=i)
+
+                    ts, created = Timesheet.objects.get_or_create(
+                        employee=employee,
+                        date=current_date,
+                        defaults={'leave_type': leave_type, 'is_confirmed': False}
+                    )
+                    if not created and not ts.is_confirmed:
+                        ts.leave_type = leave_type
+                        ts.save()
+
+            messages.success(request, f"Votre demande de congé ({start} au {end}) a été enregistrée.")
+            return redirect('my_timesheet')
+
+    # Fetch dynamic balance calculations
+    balance = employee.calculate_leave_balance()
+
+    context = {
+        'employee': employee,
+        'form': form,
+        'balance': balance,
+        'logged_data': getLoggedData(request) if 'getLoggedData' in globals() else None
+    }
+    return render(request, 'portal/request_leave.html', context)
+
 
 # new reception logc
 @login_required

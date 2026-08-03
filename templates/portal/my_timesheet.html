@@ -3,6 +3,17 @@
 
 {% block content %}
 <div class="w3-container w3-margin-top">
+    <h2>Mon Espace Personnel</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="w3-panel {% if message.tags == 'success' %}w3-green{% else %}w3-red{% endif %} w3-round w3-padding">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Filter Form Card -->
     <div class="w3-row w3-card w3-padding w3-white w3-round">
         <form method="get" action="" class="w3-container">
             <div class="w3-row-padding">
@@ -31,14 +42,19 @@
                 </div>
 
                 <div class="w3-col l4 m12 w3-margin-top w3-right-align">
+                     <!-- Link directing the employee to the dedicated leave request page -->
+                     <a href="{% url 'request_leave' %}" class="w3-button w3-amber w3-round">🌴 Demander un congé</a>
+
                      <button type="button" id="sync-btn" onclick="triggerSync()"
-                            class="w3-button w3-blue w3-round {% if remaining_syncs == 0 %}w3-disabled{% endif %}">
+                            class="w3-button w3-blue w3-round w3-margin-left {% if remaining_syncs == 0 %}w3-disabled{% endif %}">
                         🔄 Sync Terminal ({{ remaining_syncs }} restants)
-                    </button>
+                     </button>
                 </div>
             </div>
         </form>
     </div>
+
+    <!-- Timesheet Table -->
     <table class="w3-table-all w3-card w3-margin-top">
         <thead>
             <tr class="w3-light-grey">
@@ -53,20 +69,42 @@
         </thead>
         <tbody>
             {% for ts in timesheets %}
-            <tr>
+            <tr class="{% if ts.is_confirmed and ts.leave_type != 'NONE' %}w3-pale-yellow{% elif ts.is_confirmed %}w3-pale-green{% endif %}">
                 <td>{{ ts.date|date:"d/m/Y" }}</td>
-                <td>{{ ts.start_time|time:"H:i"|default:"--" }}</td>
-                <td>{{ ts.end_time|time:"H:i"|default:"--" }}</td>
-                <td>{{ ts.start_time_2|time:"H:i"|default:"--" }}</td>
-                <td>{{ ts.end_time_2|time:"H:i"|default:"--" }}</td>
-                <td><b>{{ ts.calculate_working_hours|hours_minutes }}</b></td>
+
+                {% if ts.leave_type != 'NONE' %}
+                    <td colspan="4" class="w3-center w3-text-amber">
+                        <b>🌴 {{ ts.get_leave_type_display }}</b>
+                    </td>
+                {% else %}
+                    <td>{{ ts.start_time|time:"H:i"|default:"--" }}</td>
+                    <td>{{ ts.end_time|time:"H:i"|default:"--" }}</td>
+                    <td>{{ ts.start_time_2|time:"H:i"|default:"--" }}</td>
+                    <td>{{ ts.end_time_2|time:"H:i"|default:"--" }}</td>
+                {% endif %}
+
+                <td>
+                    {% if ts.leave_type == 'NONE' %}
+                        <b>{{ ts.calculate_working_hours|hours_minutes }}</b>
+                    {% else %}
+                        --
+                    {% endif %}
+                </td>
                 <td>
                     {% if ts.is_confirmed %}
-                        <span class="w3-tag w3-green w3-round">Validé</span>
+                        {% if ts.leave_type != 'NONE' %}
+                            <span class="w3-tag w3-green w3-round">Approuvé</span>
+                        {% else %}
+                            <span class="w3-tag w3-green w3-round">Validé</span>
+                        {% endif %}
                     {% else %}
                         <span class="w3-tag w3-amber w3-round">En attente</span>
                     {% endif %}
                 </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="w3-center">Aucun enregistrement pour ce mois.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -83,10 +121,10 @@ async function triggerSync() {
         method: "POST",
         headers: { "X-CSRFToken": "{{ csrf_token }}" }
     });
-    
+
     const result = await response.json();
     alert(result.message);
-    location.reload(); // Refresh to show new data
+    location.reload();
 }
 </script>
 {% endblock %}

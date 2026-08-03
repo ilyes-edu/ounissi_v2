@@ -77,6 +77,7 @@ urlpatterns = [
     path('', views.schedule_current, name='home'),
     path('history/schedules', views.user_schedules_history, name='user_schedule_history'),
     path('my-timesheet/', views.my_timesheet, name='my_timesheet'),
+    path('request-leave/', views.request_leave, name='request_leave'),
 
     #Stock URLs
     path('stock/', views.get_stock, name='etat_stocks'),
