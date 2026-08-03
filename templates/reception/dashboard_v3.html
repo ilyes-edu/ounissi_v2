@@ -1,0 +1,83 @@
+<div class="w3-container">
+    <h3>Workflow Réception (Parallel V3)</h3>
+
+    <div class="w3-panel w3-light-grey w3-padding w3-card w3-round">
+        <div class="w3-row-padding">
+            <div class="w3-col l4">
+                <label>Assigner à :</label>
+                <select id="bulk_employees" class="w3-select w3-border" multiple>
+                    {% for emp in employees %}<option value="{{ emp.id }}">{{ emp }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="w3-col l3">
+                <label>Étape :</label>
+                <select id="bulk_step" class="w3-select w3-border">
+                    {% for code, label in steps %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="w3-col l2 w3-margin-top">
+                <button onclick="executeBulkAssign()" class="w3-button w3-green w3-round">Appliquer</button>
+            </div>
+        </div>
+    </div>
+
+    <table class="w3-table-all w3-hoverable w3-margin-top">
+        <thead>
+            <tr class="w3-dark-grey">
+                <th><input type="checkbox" onclick="toggleAll(this)"></th>
+                <th>Fournisseur</th>
+                <th>Réf Tiers</th>
+                <th>Date</th>
+                <th>REC</th>
+                <th>SAI</th>
+                <th>PRO</th>
+                <th>VIG</th>
+                <th>PLA</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proc in processes %}
+            <tr>
+                <td><input type="checkbox" class="proc-checkbox" value="{{ proc.id }}"></td>
+                <td>{{ proc.supplier }}</td>
+                <td>{{ proc.ref_tiers }}</td>
+                <td>{{ proc.reception_date|date:"d/m" }}</td>
+
+                {% for code, label in steps %}
+                <td class="w3-center">
+                    {% with task=proc.tasks.all|get_task_by_step:code %}
+                        {% if task %}
+                            <span class="w3-tag w3-round {% if task.status == 'DONE' %}w3-green{% elif task.status == 'ASSIGNED' %}w3-blue{% else %}w3-amber{% endif %}"
+                                  title="{{ task.employees.all|join:', ' }}">
+                                {{ task.status|first }}
+                            </span>
+                        {% else %}
+                            <span class="w3-text-light-grey">○</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function executeBulkAssign() {
+    const selected = Array.from(document.querySelectorAll('.proc-checkbox:checked')).map(cb => cb.value);
+    const emps = Array.from(document.getElementById('bulk_employees').selectedOptions).map(o => o.value);
+    const step = document.getElementById('bulk_step').value;
+
+    if (selected.length === 0 || emps.length === 0) return alert("Sélectionnez des factures et des employés.");
+
+    const response = await fetch('/api/reception/bulk-assign-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ process_ids: selected, employee_ids: emps, task_step: step })
+    });
+
+    const res = await response.json();
+    if(res.status === 'success') location.reload();
+}
+</script>
